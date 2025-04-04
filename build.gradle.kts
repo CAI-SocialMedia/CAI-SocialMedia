@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.cai"
-version = "0.0.1-SNAPSHOT"
+version = "0.0.2"
 
 java {
 	toolchain {
@@ -24,10 +24,14 @@ repositories {
 }
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
+
+	//firebase
+	implementation("com.google.firebase:firebase-admin:9.2.0")
+	implementation("com.google.cloud:google-cloud-firestore:3.14.5")
+
 	compileOnly("org.projectlombok:lombok")
 	annotationProcessor("org.projectlombok:lombok")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
