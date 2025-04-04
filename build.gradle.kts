@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.cai"
-version = "0.0.2"
+version = "0.0.3"
 
 java {
 	toolchain {
@@ -29,8 +29,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
 
 	//firebase
-	implementation("com.google.firebase:firebase-admin:9.2.0")
-	implementation("com.google.cloud:google-cloud-firestore:3.14.5")
+	implementation("com.google.firebase:firebase-admin:9.4.3")
 
 	compileOnly("org.projectlombok:lombok")
 	annotationProcessor("org.projectlombok:lombok")
