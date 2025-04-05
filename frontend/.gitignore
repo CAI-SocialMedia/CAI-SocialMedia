@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+frontend/package.json
+frontend/package-lock.json
+frontend/src/auth/firebase.js
