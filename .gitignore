@@ -33,5 +33,13 @@ out/
 /nbdist/
 /.nb-gradle/
 
+node_modules
+dist
+dist-ssr
+*.local
+
 ### VS Code ###
 .vscode/
+
+src/main/resources/firebase/package.json
+src/main/resources/firebase/package-lock.json
