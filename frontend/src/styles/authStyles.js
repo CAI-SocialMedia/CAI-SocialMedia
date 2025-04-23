@@ -8,13 +8,13 @@ export const styles = {
     fullPage: {
         minHeight: "100vh",
         width: "100vw",
-        backgroundColor: colors.primaryDark,
+        backgroundColor: colors.backgroundLight,
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
     },
     card: {
-        backgroundColor: colors.primary,
+        backgroundColor: colors.white,
         padding: "2.5rem",
         borderRadius: "12px",
         boxShadow: "0 0 20px rgba(0,0,0,0.4)",
@@ -34,7 +34,7 @@ export const styles = {
     title: {
         marginBottom: "1.8rem",
         fontSize: "1.8rem",
-        color: colors.backgroundLight,
+        color: colors.darkestDark,
     },
     input: {
         width: "100%",
@@ -42,8 +42,8 @@ export const styles = {
         marginBottom: "1.2rem",
         borderRadius: "8px",
         border: "1px solid #ccc",
-        backgroundColor: colors.backgroundLight,
-        color: colors.primaryDark,
+        backgroundColor: colors.darkestDark,
+        color: colors.white,
         fontSize: "1rem",
         transition: "all 0.2s ease-in-out",
     },
@@ -51,7 +51,7 @@ export const styles = {
         width: "100%",
         padding: "0.75rem",
         borderRadius: "8px",
-        backgroundColor: colors.primaryDark,
+        backgroundColor: colors.darkestDark,
         color: colors.white,
         fontWeight: "600",
         fontSize: "1rem",
@@ -62,7 +62,7 @@ export const styles = {
     toggleText: {
         marginTop: "1.2rem",
         fontSize: "0.9rem",
-        color: colors.backgroundLight,
+        color: colors.darkestDark,
     },
     toggleLink: {
         color: colors.accent,

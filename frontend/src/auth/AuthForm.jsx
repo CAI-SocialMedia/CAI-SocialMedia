@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
-import { authenticate } from "../services/authService";
-import { fetchUserData } from "../services/userService";
 import { firebaseErrorMessages } from "../utils/firebaseErrorMessages.js";
 import { styles } from "../styles/authStyles";
+import { Link } from "react-router-dom";
 
-export default function AuthForm({ onUserFetched }) {
+export default function AuthForm({ isRegister, onSubmit }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [isRegister, setIsRegister] = useState(false);
     const [error, setError] = useState("");
 
     const handleSubmit = async () => {
@@ -17,9 +15,7 @@ export default function AuthForm({ onUserFetched }) {
         }
 
         try {
-            const { token } = await authenticate(email, password, isRegister);
-            const user = await fetchUserData(token);
-            onUserFetched(user);
+            await onSubmit(email, password);
             setError("");
         } catch (err) {
             const code = err.code;
@@ -28,14 +24,12 @@ export default function AuthForm({ onUserFetched }) {
         }
     };
 
-
     useEffect(() => {
         if (error) {
             const timer = setTimeout(() => setError(""), 4000);
-            return () => clearTimeout(timer); // component yeniden render olursa zamanlayıcıyı temizle
+            return () => clearTimeout(timer);
         }
     }, [error]);
-
 
     return (
         <div style={styles.fullPage}>
@@ -56,24 +50,17 @@ export default function AuthForm({ onUserFetched }) {
                         onChange={(e) => setPassword(e.target.value)}
                         style={styles.input}
                     />
-
-                    {error && (
-                        <div style={styles.errorBox}>
-                            {error}
-                        </div>
-                    )}
-
+                    {error && <div style={styles.errorBox}>{error}</div>}
                     <button onClick={handleSubmit} style={styles.button}>
                         {isRegister ? "Kayıt Ol" : "Giriş Yap"}
                     </button>
+
+                    {/* Buraya taşıyoruz: */}
                     <p style={styles.toggleText}>
-                        {isRegister ? "Zaten hesabın var mı?" : "Hesabın yok mu?"}
-                        <button
-                            style={{...styles.toggleLink, background: "none", border: "none"}}
-                            onClick={() => setIsRegister(!isRegister)}
-                        >
-                            {isRegister ? " Giriş Yap" : " Kayıt Ol"}
-                        </button>
+                        {isRegister ? "Zaten hesabın var mı?" : "Hesabın yok mu?"}{" "}
+                        <Link to={isRegister ? "/login" : "/register"} style={styles.toggleLink}>
+                            {isRegister ? "Giriş Yap" : "Kayıt Ol"}
+                        </Link>
                     </p>
                 </div>
             </div>
