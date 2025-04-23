@@ -1,5 +1,5 @@
 import {colors} from "../styles/theme.js";
-
+import { Link } from "react-router-dom";
 export default function UserInfo({ user }) {
     return (
         <div style={styles.page}>
