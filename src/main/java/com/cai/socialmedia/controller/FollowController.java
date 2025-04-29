@@ -1,46 +1,48 @@
 package com.cai.socialmedia.controller;
 
+import com.cai.socialmedia.dto.FollowInfoDTO;
+import com.cai.socialmedia.util.ApiResponse;
 import com.cai.socialmedia.service.FollowService;
-import com.google.firebase.auth.FirebaseToken;
-import org.apache.coyote.Response;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/follow")
+@RequiredArgsConstructor
 public class FollowController {
 
-    @Autowired
-    private FollowService followService;
+    private final FollowService followService;
 
-
-    @PostMapping("/{targerUid}")
-    public ResponseEntity<String> follow (@AuthenticationPrincipal FirebaseToken token, @PathVariable String targetUid){
-        followService.followUser(token.getUid(), targetUid);
-        return ResponseEntity.ok("Takip edildi.");
+    @PostMapping("/{targetUid}")
+    public ResponseEntity<ApiResponse<Void>> follow(HttpServletRequest request, @PathVariable String targetUid) {
+        String followerUid = (String) request.getAttribute("firebaseUid");
+        followService.followUser(followerUid, targetUid);
+        return ResponseEntity.ok(ApiResponse.success("Takip edildi.", null));
     }
-
 
     @DeleteMapping("/{targetUid}")
-    public ResponseEntity<String> unfollow (@AuthenticationPrincipal FirebaseToken token, @PathVariable String targetUid){
-        followService.unfollowUser(token.getUid(), targetUid);
-        return ResponseEntity.ok("Takipten çıkıldı.");
+    public ResponseEntity<ApiResponse<Void>> unfollow(HttpServletRequest request, @PathVariable String targetUid) {
+        String followerUid = (String) request.getAttribute("firebaseUid");
+        followService.unfollowUser(followerUid, targetUid);
+        return ResponseEntity.ok(ApiResponse.success("Takipten çıkıldı.", null));
     }
 
-
-    @GetMapping("/follower/{uid}")
-    public ResponseEntity<List<String>> getFollowersList (@AuthenticationPrincipal FirebaseToken token, @PathVariable String uid){
-        List<String> followers=followService.getFollowers(token.getUid(), uid);
-        return ResponseEntity.ok(followers);
+    @GetMapping("/followers/{uid}")
+    public ResponseEntity<ApiResponse<List<FollowInfoDTO>>> getFollowersList(HttpServletRequest request, @PathVariable String uid) {
+        request.getAttribute("firebaseUid");
+        List<FollowInfoDTO> followers = followService.getFollowers(uid);
+        return ResponseEntity.ok(ApiResponse.success(followers));
     }
-
 
     @GetMapping("/following/{uid}")
-    public ResponseEntity<List<String>> getFollowingList(@AuthenticationPrincipal FirebaseToken token, @PathVariable String uid){
-        List<String> following=followService.getFollowing(token.getUid(), uid);
-        return ResponseEntity.ok(following);
+    public ResponseEntity<ApiResponse<List<FollowInfoDTO>>> getFollowingList(HttpServletRequest request, @PathVariable String uid) {
+        request.getAttribute("firebaseUid");
+        List<FollowInfoDTO> following = followService.getFollowing(uid);
+        return ResponseEntity.ok(ApiResponse.success(following));
     }
+
 }
