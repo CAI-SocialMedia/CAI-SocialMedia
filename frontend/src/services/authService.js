@@ -3,8 +3,8 @@ import { auth } from "../auth/firebase.js";
 
 export async function authenticate(email, password, isRegister = false) {
     const result = isRegister
-        ? await createUserWithEmailAndPassword(auth, email, password)
-        : await signInWithEmailAndPassword(auth, email, password);
+        ? await createUserWithEmailAndPassword(auth, email, password) //is register true ise kayıt ol
+        : await signInWithEmailAndPassword(auth, email, password); //is register false  ise giriş yap
 
     const token = await result.user.getIdToken();
     // Geçici olarak ekledik. SONRA SİL
