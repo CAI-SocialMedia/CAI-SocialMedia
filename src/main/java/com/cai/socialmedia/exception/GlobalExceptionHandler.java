@@ -18,6 +18,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.ok().body(ApiResponse.fail(ex.getMessage()));
     }
 
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<ApiResponse<Void>> handleApiException(ApiException ex) {
+        return ResponseEntity.badRequest().body(ApiResponse.fail(ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneral(Exception ex) {
         return ResponseEntity.internalServerError().body(ApiResponse.fail("Beklenmeyen bir hata oluştu."));
