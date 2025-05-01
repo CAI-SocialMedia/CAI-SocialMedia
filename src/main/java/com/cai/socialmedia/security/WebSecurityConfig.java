@@ -24,7 +24,7 @@ public class WebSecurityConfig {
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/public/**", "/api/user/**", "api/follow/**").permitAll()
+                        .requestMatchers("/api/public/**", "/api/user/**", "api/follow/**", "api/post/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(firebaseTokenFilter, UsernamePasswordAuthenticationFilter.class)
