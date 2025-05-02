@@ -81,7 +81,7 @@ export default function RegisterPage({ onUserFetched }) {
                                         className="gsi-material-button-icon"
                                         alt=""
                                     />
-                                    <span className="gsi-material-button-contents">Google ile Giriş Yap</span>
+                                    <span className="gsi-material-button-contents">Google ile Kayıt Ol</span>
                                 </div>
                             </button>
                         </div>
