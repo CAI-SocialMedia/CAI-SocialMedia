@@ -56,7 +56,7 @@ public class PostRepository {
     public boolean doesPostExist(String postUid) throws ExecutionException, InterruptedException {
         DocumentReference docRef = db.collection(COLLECTION_NAME).document(postUid);
         DocumentSnapshot snapshot = docRef.get().get();
-        return snapshot.exists();
+        return snapshot.exists() && !Boolean.TRUE.equals(snapshot.getBoolean("isDeleted"));
     }
 
     public List<PostResponseDTO> getAllPostByUserUid(String userUid) throws ExecutionException, InterruptedException {
@@ -72,5 +72,19 @@ public class PostRepository {
             }
         }
         return posts;
+    }
+
+    public void incrementLikeCount(String postUid) throws ExecutionException, InterruptedException {
+        DocumentReference postRef = db.collection(COLLECTION_NAME).document(postUid);
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("likeCount", FieldValue.increment(1));
+        postRef.update(updates).get();
+    }
+
+    public void decrementLikeCount(String postUid) throws ExecutionException, InterruptedException {
+        DocumentReference postRef = db.collection(COLLECTION_NAME).document(postUid);
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("likeCount", FieldValue.increment(-1));
+        postRef.update(updates).get();
     }
 }
