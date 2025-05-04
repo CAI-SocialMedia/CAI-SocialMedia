@@ -29,7 +29,9 @@ public class WebSecurityConfig {
                                 "/api/user/**",
                                 "/api/follow/**",
                                 "/api/post/**",
-                                "/api/comment/**").permitAll()
+                                "/api/comment/**",
+                                "/api/like/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(firebaseTokenFilter, UsernamePasswordAuthenticationFilter.class)
