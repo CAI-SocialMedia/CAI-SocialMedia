@@ -1,0 +1,32 @@
+name: Firebase CD (Hosting + Firestore)
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Kodu çek
+        uses: actions/checkout@v3
+
+      - name: Node.js kur
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Firebase CLI yükle
+        run: npm install -g firebase-tools
+
+      - name: Frontend bağımlılıklarını kur
+        working-directory: frontend
+        run: npm install
+
+      - name: Frontend build et
+        working-directory: frontend
+        run: npm run build
+
+      - name: Firebase deploy (hosting + firestore rules)
+        run: firebase deploy --only hosting,firestore --token ${{ secrets.FIREBASE_TOKEN }}
