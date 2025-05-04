@@ -1,4 +1,4 @@
-name: Java CI
+name: Java CI with Gradle
 
 on:
   push:
@@ -20,5 +20,8 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Gradlle ile build
+      - name: Gradle dosyasına çalıştırma izni ver
+        run: chmod +x ./gradlew
+
+      - name: Gradle ile build
         run: ./gradlew clean build
