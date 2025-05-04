@@ -1,5 +1,13 @@
 {
   "projects": {
     "default": "cai-socialmedia"
+  },
+  "targets": {
+    "cai-socialmedia": {
+      "hosting": {
+        "frontend": ["frontend"],
+        "backend": ["backend"]
+      }
+    }
   }
 }
