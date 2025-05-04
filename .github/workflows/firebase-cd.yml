@@ -20,13 +20,14 @@ jobs:
       - name: Firebase CLI yükle
         run: npm install -g firebase-tools
 
-      - name: Frontend bağımlılıklarını kur
+      - name: Frontend bağımlılıklarını kur ve build et
         working-directory: frontend
-        run: npm install
+        run: |
+          npm install
+          npm run build
 
-      - name: Frontend build et
-        working-directory: frontend
-        run: npm run build
+      - name: Build çıktısını kontrol et
+        run: ls -la frontend/build
 
-      - name: Firebase deploy (hosting + firestore rules)
+      - name: Firebase deploy (hosting + firestore)
         run: firebase deploy --only hosting,firestore --token ${{ secrets.FIREBASE_TOKEN }}
