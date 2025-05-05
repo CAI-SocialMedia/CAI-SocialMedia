@@ -1,12 +1,11 @@
 {
   "projects": {
-    "default": "cai-socialmedia"
+    "default": "senin-firebase-proje-id"
   },
   "targets": {
-    "cai-socialmedia": {
+    "senin-firebase-proje-id": {
       "hosting": {
-        "frontend": ["frontend"],
-        "backend": ["backend"]
+        "frontend": ["frontend"]
       }
     }
   }

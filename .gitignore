@@ -43,3 +43,8 @@ dist-ssr
 
 src/main/resources/firebase/package.json
 src/main/resources/firebase/package-lock.json
+
+.firebase
+dataconnect
+dataconnect-generated
+database.rules.json

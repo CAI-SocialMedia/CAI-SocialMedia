@@ -32,11 +32,6 @@
           "destination": "/index.html"
         }
       ]
-    },
-    {
-      "target": "backend",
-      "platform": "docker",
-      "source": "."
     }
   ]
 }
