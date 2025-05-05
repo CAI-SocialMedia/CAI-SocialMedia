@@ -15,7 +15,7 @@ public class FirebaseConfig {
     @PostConstruct
     public void initFirebase() {
         try {
-            String path = System.getenv("src/main/resources/firebase-config.json");
+            String path = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
             FileInputStream serviceAccount = new FileInputStream(path);
 
             FirebaseOptions options = FirebaseOptions.builder()
