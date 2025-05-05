@@ -35,6 +35,9 @@ jobs:
       - name: Frontend build çıktısını kontrol et
         run: ls -la frontend/build
 
+      - name: gradlew çalıştırılabilir yap
+        run: chmod +x ./gradlew
+
       - name: Backend'i derle (Spring Boot JAR)
         run: ./gradlew clean build
 
