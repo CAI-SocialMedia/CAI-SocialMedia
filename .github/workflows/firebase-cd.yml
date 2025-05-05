@@ -36,11 +36,11 @@ jobs:
       - name: Frontend bağımlılıklarını kur ve build et
         working-directory: frontend
         run: |
-          npm install
+          npm ci
           npm run build
 
       - name: Firebase deploy (Hosting + Firestore)
-        run: firebase deploy --only hosting,firestore
+        run: firebase deploy --only hosting,firestore --token ${{ secrets.FIREBASE_TOKEN }}
 
       - name: Backend'i Cloud Run ile deploy et
         run: |
