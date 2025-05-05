@@ -1,9 +1,12 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: '/api',
+    baseURL: import.meta.env.PROD
+        ? 'https://socialmedia-backend-237279331001.europe-west4.run.app/api'
+        : '/api',
     withCredentials: true,
 });
+
 
 // İstek öncesi token ekleme
 api.interceptors.request.use((config) => {
