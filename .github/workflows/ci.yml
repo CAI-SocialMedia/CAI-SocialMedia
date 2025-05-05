@@ -20,6 +20,11 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - name: Firebase yapılandırma dosyasını ayarla
+        run: |
+          echo "${{ secrets.FIREBASE_CONFIG }}" > ./firebase-config.json
+          export GOOGLE_APPLICATION_CREDENTIALS=./firebase-config.json
+
       - name: Gradle dosyasına çalıştırma izni ver
         run: chmod +x ./gradlew
 
