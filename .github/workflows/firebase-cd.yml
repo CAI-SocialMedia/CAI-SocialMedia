@@ -25,7 +25,7 @@ jobs:
 
       - name: Firebase config dosyasını oluştur
         run: |
-          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" | base64 -d > src/main/resources/firebase-config.json
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" | base64 -d > firebase-config.json
 
       - name: Firebase CLI yükle
         run: npm install -g firebase-tools
