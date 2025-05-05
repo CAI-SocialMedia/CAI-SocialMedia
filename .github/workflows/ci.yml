@@ -27,6 +27,6 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Gradle ile build
-        run: ./gradlew clean build
+        run: ./gradlew clean build -Dspring.profiles.active=test
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ./src/main/resources/firebase-config.json

@@ -24,7 +24,8 @@ public class UserController {
 
         // Token'ı decode et
         FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
-
+        System.out.println("Token alındı: " + idToken);
+        System.out.println("Decoded UID: " + decodedToken.getUid());
         // Kullanıcıyı Firestore'dan al ya da oluştur
         return userService.getOrCreateUser(decodedToken);
     }

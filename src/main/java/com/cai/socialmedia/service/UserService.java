@@ -56,6 +56,7 @@ public class UserService {
             e.printStackTrace();
             throw e;
         }
+        System.out.println("Firestore'a yazılacak kullanıcı: " + uid);
         return newUser;
     }
 }
