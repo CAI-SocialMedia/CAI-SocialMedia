@@ -5,8 +5,11 @@
   "targets": {
     "cai-socialmedia": {
       "hosting": {
-        "frontend": ["frontend"]
+        "frontend": [
+          "cai-socialmedia"
+        ]
       }
     }
-  }
+  },
+  "etags": {}
 }
