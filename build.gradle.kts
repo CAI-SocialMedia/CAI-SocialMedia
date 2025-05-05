@@ -51,3 +51,8 @@ tasks.named<BootJar>("bootJar") {
 	archiveFileName.set("app.jar")
 }
 
+tasks.named<Jar>("jar") {
+	enabled = false
+}
+
+

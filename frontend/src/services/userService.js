@@ -1,5 +1,5 @@
 export async function fetchUserData(token) {
-    const res = await fetch("http://localhost:8042/api/user/me", {
+    const res = await fetch("https://socialmedia-backend-237279331001.europe-west4.run.app/api/user/me", {
         headers: { Authorization: `Bearer ${token}` }
     });
 
