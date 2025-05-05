@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 @Configuration
 public class FirebaseConfig {
@@ -15,10 +16,13 @@ public class FirebaseConfig {
     @PostConstruct
     public void initFirebase() {
         try {
-            String path = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
-            FileInputStream serviceAccount = new FileInputStream(path);
+            InputStream serviceAccount = getClass().getClassLoader().getResourceAsStream("firebase-config.json");
 
-            FirebaseOptions options = FirebaseOptions.builder()
+            if (serviceAccount == null) {
+                throw new IllegalStateException("firebase-config.json not found in classpath");
+            }
+
+            FirebaseOptions options = new FirebaseOptions.Builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .build();
 
@@ -31,6 +35,5 @@ public class FirebaseConfig {
             e.printStackTrace();
         }
     }
-
 }
 

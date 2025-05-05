@@ -33,24 +33,29 @@ public class UserService {
 
         UserDocument newUser = new UserDocument();
         newUser.setUid(uid);
-        newUser.setUsername(token.getName());
+
+        newUser.setUsername(token.getName() != null ? token.getName() : uid);
         newUser.setEmail(token.getEmail());
-        newUser.setDisplayName((String) token.getClaims().get("name"));
-        newUser.setProfilePhotoUid((String) token.getClaims().get("picture"));
+        newUser.setDisplayName((String) token.getClaims().getOrDefault("name", uid));
+        newUser.setProfilePhotoUid((String) token.getClaims().getOrDefault("picture", null));
         newUser.setRole(Role.USER);
 
-        // Abonelik bilgileri
         SubscriptionType subType = SubscriptionType.FREE;
         newUser.setSubscriptionType(subType);
         newUser.setIsPremium(false);
         newUser.setDailyQuota(subType.getDailyQuota());
         newUser.setSubscriptionStartDate(LocalDate.now().toString());
         newUser.setSubscriptionEndDate(null);
-
         newUser.setLastQuotaResetDate(LocalDate.now().toString());
         newUser.setCreatedAt(LocalDateTime.now().toString());
 
-        docRef.set(newUser);
+        try {
+            docRef.set(newUser);
+        } catch (Exception e) {
+            System.out.println("Firestore hatası: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
         return newUser;
     }
 }
