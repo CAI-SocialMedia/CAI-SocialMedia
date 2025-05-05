@@ -41,9 +41,6 @@ dist-ssr
 ### VS Code ###
 .vscode/
 
-src/main/resources/firebase/package.json
-src/main/resources/firebase/package-lock.json
-
 .firebase
 dataconnect
 dataconnect-generated
