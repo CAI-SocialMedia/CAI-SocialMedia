@@ -45,3 +45,5 @@ dist-ssr
 dataconnect
 dataconnect-generated
 database.rules.json
+
+src/main/resources/firebase-config.json
