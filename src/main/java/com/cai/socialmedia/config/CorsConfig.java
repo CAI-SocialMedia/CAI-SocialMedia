@@ -14,8 +14,12 @@ public class CorsConfig {
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowCredentials(true); // Cookie/token gönderimine izin ver
-        config.setAllowedOrigins(Arrays.asList("http://localhost:5173")); // Frontend
+        config.setAllowCredentials(true);
+        config.setAllowedOrigins(Arrays.asList(
+                "http://localhost:5173",
+                "https://cai-socialmedia.web.app",
+                "https://cai-socialmedia.firebaseapp.com"
+        ));
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
