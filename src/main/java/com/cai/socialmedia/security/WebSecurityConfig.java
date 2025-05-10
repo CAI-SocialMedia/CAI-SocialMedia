@@ -30,7 +30,8 @@ public class WebSecurityConfig {
                                 "/api/follow/**",
                                 "/api/post/**",
                                 "/api/comment/**",
-                                "/api/like/**"
+                                "/api/like/**",
+                                "/api/account/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
