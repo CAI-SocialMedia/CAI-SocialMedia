@@ -9,19 +9,22 @@ import lombok.Getter;
 @Data
 public class UserDocument {
     private String uid;
+
     private String username;
     private String email;
     private String displayName;
     private String profilePhotoUid;
+
     private Role role;
 
     private SubscriptionType subscriptionType;
-
     private Boolean isPremium;
     private String subscriptionStartDate;
     private String subscriptionEndDate;
     private Integer dailyQuota;
-    private String createdAt;
+    private String lastQuotaResetDate;
 
-    private String lastQuotaResetDate; // günlük kota sıfırlama kontrolü için
+    private String createdAt;
+    private String updatedAt;
+    private Boolean isDeleted = false;
 }

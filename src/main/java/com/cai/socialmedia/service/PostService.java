@@ -58,7 +58,7 @@ public class PostService {
             //TODO: burası sonra geliştirilecek
             return postRepository.getAllPostByUserUid(targetUserUid);
         } catch (InterruptedException | ExecutionException e) {
-            throw new ApiException("Gönderi silme aşamasında hata oluştu");
+            throw new ApiException("Gönderileri getirme aşamasında hata oluştu");
         }
     }
 }
