@@ -22,6 +22,7 @@ public class UserDocument {
     private String subscriptionStartDate;
     private String subscriptionEndDate;
     private Integer dailyQuota;
+    private Integer credits;
     private String lastQuotaResetDate;
 
     private String createdAt;

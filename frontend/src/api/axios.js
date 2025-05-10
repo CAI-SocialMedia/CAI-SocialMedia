@@ -1,14 +1,23 @@
 import axios from 'axios';
 
+const getBaseUrl = () => {
+    // Development ortamında
+    if (import.meta.env.DEV) {
+        return 'http://localhost:8042/api';
+    }
+    // Production ortamında
+    return 'https://socialmedia-backend-237279331001.europe-west4.run.app/api';
+};
+
 const api = axios.create({
-    baseURL: import.meta.env.PROD
-        ? 'https://socialmedia-backend-237279331001.europe-west4.run.app/api'
-        : '/api',
+    baseURL: getBaseUrl(),
     withCredentials: true,
+    headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
 });
 
-
-// İstek öncesi token ekleme
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -17,7 +26,6 @@ api.interceptors.request.use((config) => {
     return config;
 }, (error) => Promise.reject(error));
 
-// Cevap hatası kontrolü
 api.interceptors.response.use((response) => response, (error) => {
     if (error.response && error.response.status === 401) {
         localStorage.removeItem('token');

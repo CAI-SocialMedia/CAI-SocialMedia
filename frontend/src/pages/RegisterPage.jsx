@@ -1,100 +1,156 @@
 import React, { useState } from "react";
-import "../styles/registerStyle.css";
-import leftImage from "../assets/caiLogo.png";
 import { useNavigate } from "react-router-dom";
+import AuthLayout from "../components/layouts/AuthLayout";
 import { authenticate } from "../services/authService";
 import { fetchUserData } from "../services/userService";
+import { firebaseErrorMessages } from "../utils/firebaseErrorMessages";
+import { updateProfile } from "firebase/auth";
+import "../styles/Auth.css";
 
 export default function RegisterPage({ onUserFetched }) {
+    const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [errorMessage, setErrorMessage] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleRegister = async (email, password) => {
+    const validateUsername = (username) => {
+        // Sadece küçük harf, sayı, nokta ve alt tire içerebilir
+        const usernameRegex = /^[a-z0-9._]+$/;
+        
+        if (username.length < 4) {
+            return "Kullanıcı adı en az 4 karakter olmalıdır";
+        }
+        
+        if (!usernameRegex.test(username)) {
+            return "Kullanıcı adı sadece küçük harf, sayı, nokta ve alt tire içerebilir";
+        }
+
+        return null;
+    };
+
+    const handleRegister = async (e) => {
+        e.preventDefault();
+        setErrorMessage("");
+
+        // Username validasyonu
+        const usernameError = validateUsername(username);
+        if (usernameError) {
+            setErrorMessage(usernameError);
+            return;
+        }
+
+        setIsLoading(true);
+
         try {
-            const { token } = await authenticate(email, password, true); // register
-            const user = await fetchUserData(token);
+            console.log('Firebase Authentication başlatılıyor...');
+            const { token, user: firebaseUser } = await authenticate(email, password, true);
+            console.log('Firebase Authentication başarılı, token alındı');
+
+            // DisplayName'i güncelle
+            const trimmedUsername = username.toLowerCase().trim();
+            console.log('Firebase displayName güncelleniyor:', trimmedUsername);
+            await updateProfile(firebaseUser, {
+                displayName: trimmedUsername
+            });
+            console.log('Firebase displayName güncellendi');
+
+            console.log('Kullanıcı bilgileri alınıyor/oluşturuluyor...');
+            const user = await fetchUserData(token, trimmedUsername);
+            console.log('Kullanıcı bilgileri başarıyla alındı/oluşturuldu:', user);
+
             onUserFetched(user);
-            navigate("/me");
+            navigate("/");
         } catch (error) {
-            alert("Kayıt başarısız: " + error.message);
+            console.error('Kayıt işlemi sırasında hata:', error);
+            const firebaseCode = error.code || error.message;
+            const translatedMessage = firebaseErrorMessages[firebaseCode] || "Kayıt işlemi başarısız oldu: " + error.message;
+            setErrorMessage(translatedMessage);
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    const handleLoginRedirect = () => {
-        navigate("/login");
-    };
-
     return (
-        <div className="register-container">
-            <div className="register-left">
-                <img src={leftImage} alt="Illustration" className="left-img" />
-            </div>
+        <AuthLayout>
+            <div className="auth-form register-page">
+                <h1 className="auth-title">Kayıt Ol</h1>
+                <p className="auth-subtitle">Başlamak için lütfen bilgilerinizi giriniz</p>
 
-            <div className="register-right">
-                <div className="register-box">
-                    <h2 className="register-title">Kayıt Ol</h2>
-                    <p className="register-subtitle">
-                        Başlamak için lütfen bilgilerinizi giriniz
-                    </p>
-
-                    {/* ✅ Form onSubmit ile kontrol ediliyor */}
-                    <form
-                        className="register-form"
-                        onSubmit={(e) => {
-                            e.preventDefault(); // Sayfa yenilemesini engelle
-                            handleRegister(email, password);
-                        }}
-                    >
+                <form onSubmit={handleRegister}>
+                    <div className="auth-input-group">
                         <input
                             type="text"
-                            placeholder="E-mail"
-                            className="input-field"
+                            placeholder="Kullanıcı adı"
+                            className="auth-input"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                            required
+                            minLength={4}
+                            pattern="[a-z0-9._]+"
+                            title="Sadece küçük harf, sayı, nokta ve alt tire kullanabilirsiniz"
+                        />
+                        <input
+                            type="email"
+                            placeholder="E-posta"
+                            className="auth-input"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
+                            required
                         />
                         <input
                             type="password"
                             placeholder="Şifre"
-                            className="input-field"
+                            className="auth-input"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
+                            required
                         />
-                        <p className="password-hint">
+                        <p className="auth-hint">
+                            *Kullanıcı adı en az 4 karakter olmalıdır ve sadece küçük harf, sayı, nokta ve alt tire
+                            içerebilir
+                        </p>
+                        <p className="auth-hint">
                             *Şifre rakamlar, küçük-büyük harfler ve özel karakter içermelidir
                         </p>
+                    </div>
 
-                        <div className="button-group">
-                            {/* ✅ type="submit" artık güvenli */}
-                            <button type="submit" className="btn-primary">
-                                Hesap Oluştur
-                            </button>
+                    {errorMessage && <div className="auth-error">{errorMessage}</div>}
 
-                            <button
-                                type="button"
-                                className="google-login-button gsi-material-button"
-                            >
-                                <div className="gsi-material-button-state"></div>
-                                <div className="gsi-material-button-content-wrapper">
-                                    <img
-                                        src="https://developers.google.com/identity/images/g-logo.png"
-                                        className="gsi-material-button-icon"
-                                        alt=""
-                                    />
-                                    <span className="gsi-material-button-contents">Google ile Kayıt Ol</span>
-                                </div>
-                            </button>
-                        </div>
-                    </form>
+                    <button
+                        type="submit"
+                        className="auth-button primary"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? "Kayıt Yapılıyor..." : "Hesap Oluştur"}
+                    </button>
 
-                    <p className="login-text">
-                        Zaten üye misiniz?{" "}
-                        <span className="login-link" onClick={handleLoginRedirect}>
+                    <div className="auth-divider">
+                        <span>veya</span>
+                    </div>
+
+                    <button type="button" className="auth-button google">
+                        <img
+                            src="https://developers.google.com/identity/images/g-logo.png"
+                            alt="Google"
+                            className="google-icon"
+                        />
+                        Google ile Kayıt Ol
+                    </button>
+
+                    <div className="auth-footer">
+                        <span>Zaten üye misiniz?</span>
+                        <button
+                            type="button"
+                            className="auth-link"
+                            onClick={() => navigate("/login")}
+                        >
                             Giriş Yap
-                        </span>
-                    </p>
-                </div>
+                        </button>
+                    </div>
+                </form>
             </div>
-        </div>
+        </AuthLayout>
     );
 }

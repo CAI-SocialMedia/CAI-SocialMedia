@@ -1,11 +1,10 @@
-import "../styles/LoginPage.css";
-import logo from "../assets/caiLogo.png";
-import avatar from "../assets/user_foto.png";
 import { useNavigate } from "react-router-dom";
 import React, { useState } from "react";
 import { authenticate } from "../services/authService";
 import { fetchUserData } from "../services/userService";
 import {firebaseErrorMessages} from "../utils/firebaseErrorMessages.js";
+import AuthLayout from "../components/layouts/AuthLayout";
+import "../styles/Auth.css";
 
 export default function LoginPage({ onUserFetched }) {
     const [email, setEmail] = useState("");
@@ -22,83 +21,71 @@ export default function LoginPage({ onUserFetched }) {
             const { token } = await authenticate(email, password, false);
             const user = await fetchUserData(token);
             onUserFetched(user);
-            navigate("/me");
+            navigate("/");
         } catch (error) {
             const firebaseCode = error.code || error.message;
             const translatedMessage = firebaseErrorMessages[firebaseCode] || "Giriş başarısız.";
             setErrorMessage(translatedMessage);
-
         } finally {
             setIsLoading(false);
         }
-
     };
-
-    const handleRegisterRedirect = () => {
-        navigate("/register");
-    };
-
 
     return (
-        <div className="login-container">
-            <div className="left-side">
-                <img src={logo} alt="CAI Logo" className="cai-logo" />
-            </div>
-
-            <div className="right-side">
-                <div className="register-link" onClick={handleRegisterRedirect}>
-                    Hesabınız yok mu? <span>Kaydolun</span>
+        <AuthLayout>
+            <div className="auth-form login-page">
+                <h1 className="auth-title">Giriş Yap</h1>
+                
+                <div className="auth-input-group">
+                    <input
+                        type="email"
+                        placeholder="Email"
+                        className="auth-input"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                    />
+                    <input
+                        type="password"
+                        placeholder="Şifre"
+                        className="auth-input"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                    />
                 </div>
 
-                <img src={avatar} alt="User Avatar" className="avatar" />
-
-                <input
-                    type="email"
-                    placeholder="Email"
-                    className="input"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                />
-                <input
-                    type="password"
-                    placeholder="Şifre"
-                    className="input"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                />
-
-                {errorMessage && <div className="error-text">{errorMessage}</div>}
-
-                <div className="button-row">
-                    <button
-                        className="login-btn"
-                        onClick={handleLogin}
-                        disabled={isLoading}
-                    >
-                        {isLoading ? "Giriş Yapılıyor..." : "GİRİŞ YAP"}
-                    </button>
-                    <button className="forgot-btn">ŞİFREMİ UNUTTUM</button>
-                </div>
-
-                <div className="alt-login-text">
-                    veya şununla giriş yapmayı deneyin
-                </div>
+                {errorMessage && <div className="auth-error">{errorMessage}</div>}
 
                 <button
-                    type="button"
-                    className="google-login-button gsi-material-button"
+                    className="auth-button primary"
+                    onClick={handleLogin}
+                    disabled={isLoading}
                 >
-                    <div className="gsi-material-button-state"></div>
-                    <div className="gsi-material-button-content-wrapper">
-                        <img
-                            src="https://developers.google.com/identity/images/g-logo.png"
-                            className="gsi-material-button-icon"
-                            alt=""
-                        />
-                        <span className="gsi-material-button-contents">Google ile Kayıt Ol</span>
-                    </div>
+                    {isLoading ? "Giriş Yapılıyor..." : "Giriş Yap"}
                 </button>
+
+                <div className="auth-divider">
+                    <span>veya</span>
+                </div>
+
+                <button className="auth-button google">
+                    <img
+                        src="https://developers.google.com/identity/images/g-logo.png"
+                        alt="Google"
+                        className="google-icon"
+                    />
+                    Google ile Giriş Yap
+                </button>
+
+                <div className="auth-footer">
+                    <span>Hesabınız yok mu?</span>
+                    <button
+                        className="auth-link"
+                        onClick={() => navigate("/register")}
+                    >
+                        Kayıt Ol
+                    </button>
+                </div>
             </div>
-        </div>
+        </AuthLayout>
     );
 }

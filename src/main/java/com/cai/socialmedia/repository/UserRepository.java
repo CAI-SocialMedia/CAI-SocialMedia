@@ -8,8 +8,12 @@ import com.cai.socialmedia.util.DateUtil;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -17,20 +21,41 @@ public class UserRepository {
 
     private static final String COLLECTION_NAME = "users";
     private final Firestore db = FirestoreClient.getFirestore();
+    private static final Logger log = LoggerFactory.getLogger(UserRepository.class);
+
+    public List<UserDocument> getAllActiveUsers() {
+        try {
+            QuerySnapshot snapshot = db.collection(COLLECTION_NAME)
+                    .whereEqualTo("isDeleted", false)
+                    .get()
+                    .get();
+
+            List<UserDocument> users = new ArrayList<>();
+            for (QueryDocumentSnapshot doc : snapshot.getDocuments()) {
+                UserDocument user = doc.toObject(UserDocument.class);
+                if (user != null) {
+                    users.add(user);
+                }
+            }
+            return users;
+        } catch (Exception e) {
+            throw new ApiException("Aktif kullanıcılar getirilirken hata oluştu: " + e.getMessage());
+        }
+    }
 
     public Optional<UserDocument> getUserByUid(String userUid) {
         try {
             var snapshot = db.collection(COLLECTION_NAME).document(userUid).get().get();
+            if (!snapshot.exists()) {
+                return Optional.empty();
+            }
+
             UserDocument user = snapshot.toObject(UserDocument.class);
-            if (user == null && user.getIsDeleted()) {
+            if (user != null && user.getIsDeleted()) {
                 throw new ApiException("Hesap zaten silinmiş.");
             }
 
-            if (snapshot.exists()) {
-                return Optional.of(snapshot.toObject(UserDocument.class));
-            } else {
-                return Optional.empty();
-            }
+            return Optional.ofNullable(user);
         } catch (Exception e) {
             e.printStackTrace();
             throw new ApiException("Kullanıcı bulunamadı");
@@ -39,9 +64,17 @@ public class UserRepository {
 
 
     public void save(UserDocument userDocument) {
-        db.collection(COLLECTION_NAME)
-                .document(userDocument.getUid())
-                .set(userDocument, SetOptions.merge());
+        try {
+            log.info("Firestore'a kullanıcı kaydediliyor - UID: {}", userDocument.getUid());
+            db.collection(COLLECTION_NAME)
+                    .document(userDocument.getUid())
+                    .set(userDocument, SetOptions.merge())
+                    .get(); // İşlemin tamamlanmasını bekle
+            log.info("Kullanıcı başarıyla kaydedildi - UID: {}", userDocument.getUid());
+        } catch (Exception e) {
+            log.error("Kullanıcı kaydedilirken hata oluştu - UID: {}, Hata: {}", userDocument.getUid(), e.getMessage());
+            throw new ApiException("Kullanıcı kaydedilirken hata oluştu: " + e.getMessage());
+        }
     }
 
     public void softDelete(String userUid) {
