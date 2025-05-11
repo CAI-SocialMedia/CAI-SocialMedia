@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthLayout from "../components/layouts/AuthLayout";
-import { authenticate } from "../services/authService";
+import { authenticate, authenticateWithGoogle } from "../services/authService";
 import { fetchUserData } from "../services/userService";
 import { firebaseErrorMessages } from "../utils/firebaseErrorMessages";
 import { updateProfile } from "firebase/auth";
@@ -72,6 +72,25 @@ export default function RegisterPage({ onUserFetched }) {
         }
     };
 
+    const handleGoogleRegister = async () => {
+        setIsLoading(true);
+        setErrorMessage("");
+
+        try {
+            const { token, user } = await authenticateWithGoogle();
+            const userData = await fetchUserData(token, user.displayName);
+            onUserFetched(userData);
+            navigate("/");
+        } catch (error) {
+            console.error('Google kayıt işlemi sırasında hata:', error);
+            const firebaseCode = error.code || error.message;
+            const translatedMessage = firebaseErrorMessages[firebaseCode] || "Google ile kayıt başarısız oldu.";
+            setErrorMessage(translatedMessage);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <AuthLayout>
             <div className="auth-form register-page">
@@ -130,7 +149,12 @@ export default function RegisterPage({ onUserFetched }) {
                         <span>veya</span>
                     </div>
 
-                    <button type="button" className="auth-button google">
+                    <button 
+                        type="button" 
+                        className="auth-button google"
+                        onClick={handleGoogleRegister}
+                        disabled={isLoading}
+                    >
                         <img
                             src="https://developers.google.com/identity/images/g-logo.png"
                             alt="Google"

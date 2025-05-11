@@ -12,32 +12,29 @@ import { checkAuthState, fetchUserData } from "./services/userService";
 function App() {
     const [userData, setUserData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const isAuthenticated = Boolean(userData);
     const location = window.location.pathname;
 
     // Header'ın gösterilmemesi gereken sayfalar
     const hideHeaderPaths = ['/login', '/register'];
 
     useEffect(() => {
-        const initializeAuth = async () => {
-            try {
-                const isAuthenticated = await checkAuthState();
-                if (isAuthenticated) {
-                    const user = auth.currentUser;
-                    if (user) {
-                        const token = await user.getIdToken();
-                        const data = await fetchUserData(token);
-                        setUserData(data);
-                    }
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                try {
+                    const token = await user.getIdToken();
+                    const data = await fetchUserData(token);
+                    setUserData(data);
+                } catch (error) {
+                    console.error("Kullanıcı bilgileri alınamadı:", error);
+                    setUserData(null);
                 }
-            } catch (err) {
-                console.error("Oturum durumu kontrol edilirken hata oluştu:", err);
-            } finally {
-                setIsLoading(false);
+            } else {
+                setUserData(null);
             }
-        };
+            setIsLoading(false);
+        });
 
-        initializeAuth();
+        return () => unsubscribe();
     }, []);
 
     if (isLoading) {
@@ -48,41 +45,32 @@ function App() {
         );
     }
 
+    // Kullanıcı giriş yapmamışsa ve login/register sayfasında değilse login'e yönlendir
+    if (!userData && !hideHeaderPaths.includes(location)) {
+        return <Navigate to="/login" replace />;
+    }
+
     return (
         <Router>
             <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-950 text-slate-200">
-                {/* Header'ı sadece belirli sayfalarda göster */}
-                {isAuthenticated && !hideHeaderPaths.includes(location) && <Header user={userData} />}
+                {/* Header'ı sadece kullanıcı giriş yapmışsa ve login/register sayfalarında değilse göster */}
+                {userData && !hideHeaderPaths.includes(location) && <Header user={userData} />}
 
                 <main className="container mx-auto px-4 py-8">
                     <div className="max-w-6xl mx-auto">
                         <Routes>
-                            {/* Login/Register yönlendirmeleri */}
                             <Route path="/login" element={<LoginPage onUserFetched={setUserData} />} />
                             <Route path="/register" element={<RegisterPage onUserFetched={setUserData} />} />
-
-                            {/* Kimliği doğrulanmamış kullanıcıyı login sayfasına yönlendir */}
-                            <Route
-                                path="/me"
-                                element={isAuthenticated ? <UserInfo user={userData} /> : <Navigate to="/login" />}
-                            />
-                            <Route
-                                path="/explore"
-                                element={isAuthenticated ? <Explore /> : <Navigate to="/login" />}
-                            />
-                            <Route
-                                path="/"
-                                element={isAuthenticated ? <Home currentUser={userData} /> : <Navigate to="/login" />}
-                            />
-
-                            {/* Tanımsız yollar login'e yönlendirilir */}
+                            <Route path="/me" element={userData ? <UserInfo user={userData} /> : <Navigate to="/login" />} />
+                            <Route path="/explore" element={userData ? <Explore /> : <Navigate to="/login" />} />
+                            <Route path="/" element={userData ? <Home currentUser={userData} /> : <Navigate to="/login" />} />
                             <Route path="*" element={<Navigate to="/login" replace />} />
                         </Routes>
                     </div>
                 </main>
 
-                {/* Footer'ı da sadece belirli sayfalarda göster */}
-                {isAuthenticated && !hideHeaderPaths.includes(location) && (
+                {/* Footer'ı sadece kullanıcı giriş yapmışsa ve login/register sayfalarında değilse göster */}
+                {userData && !hideHeaderPaths.includes(location) && (
                     <footer className="bg-slate-900/60 backdrop-blur-sm border-t border-slate-800 py-8">
                         <div className="container mx-auto px-4">
                             <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">

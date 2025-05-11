@@ -47,4 +47,3 @@ dataconnect-generated
 database.rules.json
 
 src/main/resources/firebase-config.json
-src/main/resources/application.properties

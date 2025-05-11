@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Mail, Key, CreditCard, Calendar } from 'lucide-react';
+import { Avatar } from '../components/Avatar';
 
 export default function UserInfo({ user }) {
     const navigate = useNavigate();
@@ -33,9 +34,7 @@ export default function UserInfo({ user }) {
                 <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 shadow-xl">
                     {/* Avatar and Basic Info */}
                     <div className="flex items-center gap-6 mb-8">
-                        <div className="h-24 w-24 rounded-full bg-gradient-to-br from-purple-600 to-pink-500 flex items-center justify-center text-3xl font-bold text-white">
-                            {user.username?.charAt(0).toUpperCase()}
-                        </div>
+                        <Avatar user={user} size="xlg" />
                         <div>
                             <h2 className="text-2xl font-bold mb-1">{user.displayName}</h2>
                             <p className="text-slate-400">{user.email}</p>

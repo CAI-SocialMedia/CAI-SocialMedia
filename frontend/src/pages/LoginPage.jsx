@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import React, { useState } from "react";
-import { authenticate } from "../services/authService";
+import { authenticate, authenticateWithGoogle } from "../services/authService";
 import { fetchUserData } from "../services/userService";
 import {firebaseErrorMessages} from "../utils/firebaseErrorMessages.js";
 import AuthLayout from "../components/layouts/AuthLayout";
@@ -25,6 +25,24 @@ export default function LoginPage({ onUserFetched }) {
         } catch (error) {
             const firebaseCode = error.code || error.message;
             const translatedMessage = firebaseErrorMessages[firebaseCode] || "Giriş başarısız.";
+            setErrorMessage(translatedMessage);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleGoogleLogin = async () => {
+        setIsLoading(true);
+        setErrorMessage("");
+
+        try {
+            const { token, user } = await authenticateWithGoogle();
+            const userData = await fetchUserData(token, user.displayName);
+            onUserFetched(userData);
+            navigate("/");
+        } catch (error) {
+            const firebaseCode = error.code || error.message;
+            const translatedMessage = firebaseErrorMessages[firebaseCode] || "Google ile giriş başarısız.";
             setErrorMessage(translatedMessage);
         } finally {
             setIsLoading(false);
@@ -67,7 +85,11 @@ export default function LoginPage({ onUserFetched }) {
                     <span>veya</span>
                 </div>
 
-                <button className="auth-button google">
+                <button 
+                    className="auth-button google"
+                    onClick={handleGoogleLogin}
+                    disabled={isLoading}
+                >
                     <img
                         src="https://developers.google.com/identity/images/g-logo.png"
                         alt="Google"

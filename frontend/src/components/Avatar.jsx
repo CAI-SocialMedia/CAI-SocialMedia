@@ -13,7 +13,8 @@ export const Avatar = ({ user, size = 'md' }) => {
         xs: 'h-6 w-6 text-xs',
         sm: 'h-8 w-8 text-sm',
         md: 'h-10 w-10 text-base',
-        lg: 'h-12 w-12 text-lg'
+        lg: 'h-12 w-12 text-lg',
+        xlg: 'h-24 w-24 text-lg'
     };
 
     if (user.profilePhotoUid) {

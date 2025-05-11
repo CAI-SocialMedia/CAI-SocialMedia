@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, Menu, X, Compass } from 'lucide-react';
+import { Search, Menu, X, Compass, LogOut } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { Logo } from './Logo';
 import { Button } from './ui/Button';
 import { MobileMenu } from './MobileMenu';
+import { auth } from '../auth/firebase';
 
 export const Header = ({ user }) => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -15,6 +16,11 @@ export const Header = ({ user }) => {
     const handleSearch = (e) => {
         e.preventDefault();
         console.log('Searching for:', searchQuery);
+    };
+
+    const handleLogout = () => {
+        auth.signOut();
+        navigate('/login');
     };
 
     return (
@@ -95,6 +101,13 @@ export const Header = ({ user }) => {
                             </div>
                             <button onClick={() => navigate('/me')}>
                                 <Avatar user={user} size="sm" />
+                            </button>
+                            <button
+                                onClick={handleLogout}
+                                className="p-2 text-slate-400 hover:text-white transition-colors"
+                                title="Çıkış Yap"
+                            >
+                                <LogOut size={20} />
                             </button>
                         </div>
                     ) : (
