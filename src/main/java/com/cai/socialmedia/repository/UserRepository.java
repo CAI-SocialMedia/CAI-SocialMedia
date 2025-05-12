@@ -146,4 +146,17 @@ public class UserRepository {
         }
     }
 
+    public boolean existsByUsername(String username) {
+        try {
+            QuerySnapshot snapshot = db.collection(COLLECTION_NAME)
+                    .whereEqualTo("username", username)
+                    .get()
+                    .get();
+            return !snapshot.isEmpty();
+        } catch (Exception e) {
+            log.error("Username kontrolü sırasında hata oluştu: {}", e.getMessage());
+            throw new ApiException("Username kontrolü sırasında hata oluştu");
+        }
+    }
+
 }

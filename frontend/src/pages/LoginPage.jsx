@@ -1,31 +1,47 @@
-import { useNavigate } from "react-router-dom";
 import React, { useState } from "react";
-import { authenticate, authenticateWithGoogle } from "../services/authService";
-import { fetchUserData } from "../services/userService";
-import {firebaseErrorMessages} from "../utils/firebaseErrorMessages.js";
+import { useNavigate } from "react-router-dom";
 import AuthLayout from "../components/layouts/AuthLayout";
+import { authService } from "../services/authService";
+import { useAuth } from "../contexts/AuthContext";
+import { firebaseErrorMessages } from "../utils/firebaseErrorMessages";
+import { fetchUserData } from "../services/userService";
+import GoogleButton from "../components/auth/GoogleButton";
+import AuthForm from "../components/auth/AuthForm";
 import "../styles/Auth.css";
 
-export default function LoginPage({ onUserFetched }) {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
-    const [errorMessage, setErrorMessage] = useState("");
-    const navigate = useNavigate();
+export default function LoginPage() {
+    const [formData, setFormData] = useState({
+        email: "",
+        password: ""
+    });
 
-    const handleLogin = async () => {
+    const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const navigate = useNavigate();
+    const { setUser } = useAuth();
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError("");
         setIsLoading(true);
-        setErrorMessage("");
 
         try {
-            const { token } = await authenticate(email, password, false);
-            const user = await fetchUserData(token);
-            onUserFetched(user);
+            const { user, token } = await authService.login(formData.email, formData.password);
+            const userData = await fetchUserData(token);
+            setUser(userData);
             navigate("/");
         } catch (error) {
-            const firebaseCode = error.code || error.message;
-            const translatedMessage = firebaseErrorMessages[firebaseCode] || "Giriş başarısız.";
-            setErrorMessage(translatedMessage);
+            console.error("Giriş işlemi sırasında hata:", error);
+            const errorMessage = firebaseErrorMessages[error.code] || error.message;
+            setError(errorMessage);
         } finally {
             setIsLoading(false);
         }
@@ -33,17 +49,24 @@ export default function LoginPage({ onUserFetched }) {
 
     const handleGoogleLogin = async () => {
         setIsLoading(true);
-        setErrorMessage("");
+        setError("");
 
         try {
-            const { token, user } = await authenticateWithGoogle();
-            const userData = await fetchUserData(token, user.displayName);
-            onUserFetched(userData);
+            const { user, token } = await authService.loginWithGoogle();
+            const userData = await fetchUserData(token);
+            setUser(userData);
             navigate("/");
         } catch (error) {
-            const firebaseCode = error.code || error.message;
-            const translatedMessage = firebaseErrorMessages[firebaseCode] || "Google ile giriş başarısız.";
-            setErrorMessage(translatedMessage);
+            console.error('Google giriş işlemi sırasında hata:', error);
+            
+            if (error.message.includes('kayıtlı bir kullanıcı bulunamadı')) {
+                setError('Bu Google hesabı ile kayıtlı bir kullanıcı bulunamadı. Lütfen önce kayıt olun.');
+                setTimeout(() => {
+                    navigate('/register');
+                }, 2000);
+            } else {
+                setError(error.message || 'Giriş yapılırken bir hata oluştu');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -53,54 +76,51 @@ export default function LoginPage({ onUserFetched }) {
         <AuthLayout>
             <div className="auth-form login-page">
                 <h1 className="auth-title">Giriş Yap</h1>
-                
-                <div className="auth-input-group">
+                <p className="auth-subtitle">Hesabınıza giriş yapın</p>
+
+                <AuthForm
+                    formData={formData}
+                    error={error}
+                    isLoading={isLoading}
+                    onSubmit={handleSubmit}
+                    onChange={handleChange}
+                    submitButtonText="Giriş Yap"
+                    loadingButtonText="Giriş Yapılıyor..."
+                >
                     <input
                         type="email"
-                        placeholder="Email"
+                        name="email"
+                        placeholder="E-posta"
                         className="auth-input"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
                     />
                     <input
                         type="password"
+                        name="password"
                         placeholder="Şifre"
                         className="auth-input"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
                     />
-                </div>
-
-                {errorMessage && <div className="auth-error">{errorMessage}</div>}
-
-                <button
-                    className="auth-button primary"
-                    onClick={handleLogin}
-                    disabled={isLoading}
-                >
-                    {isLoading ? "Giriş Yapılıyor..." : "Giriş Yap"}
-                </button>
+                </AuthForm>
 
                 <div className="auth-divider">
                     <span>veya</span>
                 </div>
 
-                <button 
-                    className="auth-button google"
+                <GoogleButton
                     onClick={handleGoogleLogin}
                     disabled={isLoading}
-                >
-                    <img
-                        src="https://developers.google.com/identity/images/g-logo.png"
-                        alt="Google"
-                        className="google-icon"
-                    />
-                    Google ile Giriş Yap
-                </button>
+                    text="Google ile Giriş Yap"
+                />
 
                 <div className="auth-footer">
                     <span>Hesabınız yok mu?</span>
                     <button
+                        type="button"
                         className="auth-link"
                         onClick={() => navigate("/register")}
                     >

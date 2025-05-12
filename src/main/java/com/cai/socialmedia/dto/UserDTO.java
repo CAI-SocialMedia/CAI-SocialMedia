@@ -1,15 +1,20 @@
 package com.cai.socialmedia.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class UpdateUserRequestDTO {
+public class UserDTO {
     private String uid;
     private String username;
     private String displayName;
     private String profilePhotoUid;
+    private Integer credits;
+    private String subscriptionType;
 }
+

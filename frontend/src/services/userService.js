@@ -1,5 +1,6 @@
 import api from "../api/axios.js";
 import { auth } from "../auth/firebase.js";
+import { generateSafeUsername } from "../utils/stringUtils.js";
 
 // Token yenileme için interval (5 dakika)
 const TOKEN_REFRESH_INTERVAL = 5 * 60 * 1000;
@@ -50,40 +51,42 @@ export const checkAuthState = () => {
     });
 };
 
-export async function fetchUserData(token, username) {
-    console.log('fetchUserData çağrıldı, username:', username);
-    
-    // Eğer username varsa direkt POST isteği yap
-    if (username) {
-        try {
-            console.log('POST /user/me isteği gönderiliyor, username:', username);
-            const createResponse = await api.post('/user/me', {
-                username: username
-            }, {
-                headers: { 
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            console.log('POST /user/me yanıtı:', createResponse.data);
-            return createResponse.data;
-        } catch (createError) {
-            console.error('POST /user/me hatası:', createError);
-            throw new Error('Kullanıcı bilgileri alınamadı veya oluşturulamadı: ' + createError.message);
-        }
-    }
-
-    // Username yoksa GET isteği yap
+export async function fetchUserData(token) {
     try {
-        console.log('GET /user/me isteği gönderiliyor');
+        // Google kayıt sayfasındaysak null döndür
+        if (window.location.pathname === '/google-register') {
+            return null;
+        }
+
         const response = await api.get('/user/me', {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { 
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
         });
-        console.log('GET /user/me yanıtı:', response.data);
         return response.data;
     } catch (error) {
         console.error('GET /user/me hatası:', error);
-        throw new Error('Kullanıcı bilgileri alınamadı: ' + error.message);
+        
+        // Google kayıt sayfasındaysak hatayı fırlatma
+        if (window.location.pathname === '/google-register') {
+            return null;
+        }
+        
+        // Backend'den gelen hata mesajını kullan
+        const errorMessage = error.response?.data?.Message || error.response?.data?.message || error.message;
+        
+        // 401 hatası değilse direkt hatayı fırlat
+        if (error.response?.status !== 401) {
+            throw new Error(errorMessage);
+        }
+        
+        // 401 hatası ise ve login/register sayfasında değilsek yönlendir
+        if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+            localStorage.removeItem('authToken');
+            window.location.href = '/login';
+        }
+        throw new Error(errorMessage);
     }
 }
 

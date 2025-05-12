@@ -1,6 +1,7 @@
 package com.cai.socialmedia.service;
 
 import com.cai.socialmedia.dto.UpdateUserRequestDTO;
+import com.cai.socialmedia.dto.UserDTO;
 import com.cai.socialmedia.enums.Role;
 import com.cai.socialmedia.enums.SubscriptionType;
 import com.cai.socialmedia.exception.ApiException;
@@ -13,9 +14,9 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -25,160 +26,176 @@ public class UserService {
     private final UserRepository userRepository;
     private final String TODAY = DateUtil.formatYearMonthDay();
 
-    // Her gün gece 00:00'da çalışacak zamanlanmış görev
+    // Kullanıcı Bulma İşlemleri
+    public UserDocument getUserByUid(String uid) {
+        return userRepository.getUserByUid(uid)
+                .orElseThrow(() -> new ApiException("Kullanıcı bulunamadı"));
+    }
+
+    public UserDTO getUserDtoByUid(String uid) {
+        UserDocument user = getUserByUid(uid);
+        return convertToDTO(user);
+    }
+
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
+    // Kullanıcı Oluşturma ve Güncelleme İşlemleri
+    public UserDocument createUser(FirebaseToken token, String username) {
+        validateNewUser(username);
+        
+        UserDocument user = new UserDocument();
+        user.setUid(token.getUid());
+        user.setEmail(token.getEmail());
+        user.setDisplayName(token.getName());
+        user.setProfilePhotoUid(token.getPicture());
+        user.setUsername(username);
+        user.setRole(Role.USER);
+        user.setSubscriptionType(SubscriptionType.FREE);
+        user.setIsPremium(false);
+        user.setDailyQuota(SubscriptionType.FREE.getDailyQuota());
+        user.setCredits(SubscriptionType.FREE.getDailyQuota());
+        user.setLastQuotaResetDate(TODAY);
+        user.setCreatedAt(DateUtil.formatTimestamp(Timestamp.now()));
+        user.setUpdatedAt(DateUtil.formatTimestamp(Timestamp.now()));
+
+        userRepository.save(user);
+        return user;
+    }
+
+    public UserDocument updateUser(String uid, UpdateUserRequestDTO request) {
+        UserDocument user = getUserByUid(uid);
+        validateUserUpdate(user, request);
+
+        if (request.getUsername() != null && !request.getUsername().equals(user.getUsername())) {
+            validateNewUsername(request.getUsername());
+            user.setUsername(request.getUsername());
+        }
+
+        if (request.getDisplayName() != null) {
+            user.setDisplayName(request.getDisplayName());
+        }
+
+        if (request.getProfilePhotoUid() != null) {
+            user.setProfilePhotoUid(request.getProfilePhotoUid());
+        }
+
+        user.setUpdatedAt(DateUtil.formatTimestamp(Timestamp.now()));
+        userRepository.save(user);
+        return user;
+            }
+
+    // Abonelik İşlemleri
+    public void updateSubscription(String uid, SubscriptionType newPlan) {
+        UserDocument user = getUserByUid(uid);
+        
+        if (user.getSubscriptionType() == newPlan) {
+            throw new ApiException("Zaten bu abonelik planını kullanıyorsunuz.");
+            }
+
+        if (newPlan != SubscriptionType.FREE) {
+            user.setSubscriptionStartDate(DateUtil.formatYearMonthDay());
+            user.setSubscriptionEndDate(DateUtil.formatYearMonthDayPlusDays(30));
+            user.setIsPremium(true);
+        } else {
+            user.setSubscriptionStartDate(null);
+            user.setSubscriptionEndDate(null);
+            user.setIsPremium(false);
+        }
+
+        user.setSubscriptionType(newPlan);
+        user.setDailyQuota(newPlan.getDailyQuota());
+        user.setCredits(newPlan.getDailyQuota());
+        user.setUpdatedAt(DateUtil.formatTimestamp(Timestamp.now()));
+        userRepository.save(user);
+    }
+
+    // Kredi İşlemleri
+    public boolean useCredits(String uid, int amount) {
+        UserDocument user = getUserByUid(uid);
+        checkAndResetDailyQuota(user);
+
+        if (user.getCredits() < amount) {
+            throw new ApiException("Yetersiz kredi. Mevcut krediniz: " + user.getCredits());
+        }
+
+        user.setCredits(user.getCredits() - amount);
+        user.setUpdatedAt(DateUtil.formatTimestamp(Timestamp.now()));
+        userRepository.save(user);
+        return true;
+    }
+
+    public Integer getCurrentCredits(String uid) {
+        UserDocument user = getUserByUid(uid);
+        checkAndResetDailyQuota(user);
+        return user.getCredits();
+    }
+
+    // Yardımcı Metodlar
+    private void validateNewUser(String username) {
+        if (username == null || !username.matches("^[a-z0-9_]{4,20}$")) {
+            throw new ApiException("Geçersiz kullanıcı adı formatı");
+        }
+
+        if (existsByUsername(username)) {
+            throw new ApiException("Bu kullanıcı adı zaten kullanılıyor");
+        }
+    }
+
+    private void validateNewUsername(String username) {
+        if (!username.matches("^[a-z0-9_]{4,20}$")) {
+            throw new ApiException("Geçersiz kullanıcı adı formatı");
+        }
+
+        if (existsByUsername(username)) {
+            throw new ApiException("Bu kullanıcı adı zaten kullanılıyor");
+        }
+    }
+
+    private void validateUserUpdate(UserDocument user, UpdateUserRequestDTO request) {
+        if (!user.getUid().equals(request.getUid())) {
+            throw new ApiException("Sadece kendi hesabınızı güncelleyebilirsiniz.");
+        }
+    }
+
+    private void checkAndResetDailyQuota(UserDocument user) {
+        if (!TODAY.equals(user.getLastQuotaResetDate())) {
+            user.setCredits(user.getDailyQuota());
+            user.setLastQuotaResetDate(TODAY);
+            user.setUpdatedAt(DateUtil.formatTimestamp(Timestamp.now()));
+            userRepository.save(user);
+        }
+    }
+
+    private UserDTO convertToDTO(UserDocument user) {
+        return new UserDTO(
+            user.getUid(),
+            user.getUsername(),
+            user.getDisplayName(),
+            user.getProfilePhotoUid(),
+            user.getCredits(),
+            user.getSubscriptionType().name()
+        );
+    }
+
+    // Zamanlanmış Görevler
     @Scheduled(cron = "0 0 0 * * ?")
     public void resetAllUsersDailyQuota() {
         log.info("Günlük kredi yenileme işlemi başlatıldı: {}", LocalDateTime.now());
         try {
             List<UserDocument> users = userRepository.getAllActiveUsers();
-
-            
             for (UserDocument user : users) {
                 if (!TODAY.equals(user.getLastQuotaResetDate())) {
                     user.setCredits(user.getDailyQuota());
                     user.setLastQuotaResetDate(TODAY);
-                    user.setUpdatedAt(LocalDateTime.now().toString());
-                    userRepository.save(user);
-                    log.info("Kullanıcı kredileri yenilendi - UID: {}, Yeni Kredi: {}", 
-                            user.getUid(), user.getDailyQuota());
+                    user.setUpdatedAt(DateUtil.formatTimestamp(Timestamp.now()));
+        userRepository.save(user);
                 }
             }
             log.info("Günlük kredi yenileme işlemi tamamlandı");
         } catch (Exception e) {
             log.error("Kredi yenileme işlemi sırasında hata oluştu: {}", e.getMessage());
         }
-    }
-
-    public void updateUserFields(String userUid, UpdateUserRequestDTO request) {
-        try {
-            UserDocument existingUser = userRepository.getUserByUid(userUid).
-                    orElseThrow(() -> new ApiException("Kullanıcı bulunamadı"));
-
-            if(!existingUser.getUid().equals(userUid)) {
-                throw new ApiException("Sadece kendi hesabınızı güncelleyebilirsiniz.");
-            }
-
-            userRepository.updateUserFields(userUid, request);
-        } catch (ApiException e) {
-            throw new ApiException("Kullanıcı bilgilerini güncellerken hata oluştu");
-        }
-    }
-
-    public void softDeleteUser(String userUid) {
-        try {
-            UserDocument existingUser = userRepository.getUserByUid(userUid).
-                    orElseThrow(() -> new ApiException("Kullanıcı bulunamadı"));
-
-            if(!existingUser.getUid().equals(userUid)) {
-                throw new ApiException("Sadece kendi hesabınızı güncelleyebilirsiniz.");
-            }
-
-            userRepository.softDelete(userUid);
-        } catch (ApiException e) {
-            throw new ApiException("Hesap silme aşamasında hata oluştu");
-        }
-    }
-
-    public void updateSubscription(String userUid, SubscriptionType newPlan) {
-        try {
-            UserDocument existingUser = userRepository.getUserByUid(userUid).
-                    orElseThrow(() -> new ApiException("Kullanıcı bulunamadı"));
-
-            if(!existingUser.getUid().equals(userUid)) {
-                throw new ApiException("Sadece kendi hesabınızı güncelleyebilirsiniz.");
-            }
-
-            userRepository.updateSubscription(userUid, newPlan);
-        } catch (ApiException e) {
-            throw new ApiException("Abonelik güncelleme aşamasında hata oluştu");
-        }
-    }
-
-    public UserDocument getOrCreateUser(FirebaseToken token, String username) {
-        String uid = token.getUid();
-        log.info("getOrCreateUser çağrıldı - UID: {}, Username: {}", uid, username);
-        
-        // Önce mevcut kullanıcıyı kontrol et
-        UserDocument existingUser = userRepository.getUserByUid(uid).orElse(null);
-        
-        if (existingUser != null) {
-            log.info("Mevcut kullanıcı bulundu - UID: {}", uid);
-            checkAndResetDailyQuota(existingUser);
-            return existingUser;
-        }
-
-        log.info("Yeni kullanıcı oluşturuluyor - UID: {}, Username: {}", uid, username);
-        // Yeni kullanıcı oluştur
-        UserDocument newUser = new UserDocument();
-        newUser.setUid(uid);
-        newUser.setUsername(username);
-        newUser.setEmail(token.getEmail());
-        newUser.setDisplayName(username);
-        newUser.setProfilePhotoUid((String) token.getClaims().get("picture"));
-        newUser.setRole(Role.USER);
-
-        // Varsayılan abonelik ayarları
-        SubscriptionType subType = SubscriptionType.FREE;
-        newUser.setSubscriptionType(subType);
-        newUser.setIsPremium(false);
-        newUser.setDailyQuota(subType.getDailyQuota());
-        newUser.setCredits(subType.getDailyQuota()); // Başlangıç kredileri
-        newUser.setSubscriptionStartDate(null);
-        newUser.setSubscriptionEndDate(null);
-
-        // Tarih bilgileri
-        newUser.setLastQuotaResetDate(TODAY);
-        newUser.setCreatedAt(DateUtil.formatTimestamp(Timestamp.now()));
-        newUser.setUpdatedAt(DateUtil.formatTimestamp(Timestamp.now()));
-
-        try {
-            userRepository.save(newUser);
-            log.info("Yeni kullanıcı başarıyla kaydedildi - UID: {}, Username: {}", uid, username);
-        } catch (Exception e) {
-            log.error("Kullanıcı kaydedilirken hata oluştu - UID: {}, Username: {}, Hata: {}", uid, username, e.getMessage());
-            throw new ApiException("Kullanıcı kaydedilirken hata oluştu: " + e.getMessage());
-        }
-        
-        return newUser;
-    }
-
-    private void checkAndResetDailyQuota(UserDocument user) {
-        // Eğer son yenileme tarihi bugün değilse, kredileri yenile
-        if (!TODAY.equals(user.getLastQuotaResetDate())) {
-            user.setCredits(user.getDailyQuota());
-            user.setLastQuotaResetDate(TODAY);
-            user.setUpdatedAt(LocalDateTime.now().toString());
-            userRepository.save(user);
-        }
-    }
-
-    public boolean useCredits(String userUid, int amount) {
-        UserDocument user = userRepository.getUserByUid(userUid)
-                .orElseThrow(() -> new ApiException("Kullanıcı bulunamadı"));
-
-        // Kredileri kontrol et ve gerekirse yenile
-        checkAndResetDailyQuota(user);
-
-        // Yeterli kredi var mı kontrol et
-        if (user.getCredits() < amount) {
-            throw new ApiException("Yetersiz kredi. Mevcut krediniz: " + user.getCredits());
-        }
-
-        // Kredileri düş
-        user.setCredits(user.getCredits() - amount);
-        user.setUpdatedAt(LocalDateTime.now().toString());
-        userRepository.save(user);
-        
-        return true;
-    }
-
-    public Integer getCurrentCredits(String userUid) {
-        UserDocument user = userRepository.getUserByUid(userUid)
-                .orElseThrow(() -> new ApiException("Kullanıcı bulunamadı"));
-        
-        // Kredileri kontrol et ve gerekirse yenile
-        checkAndResetDailyQuota(user);
-        
-        return user.getCredits();
     }
 }

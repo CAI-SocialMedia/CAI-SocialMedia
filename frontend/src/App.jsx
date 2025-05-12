@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -6,86 +6,113 @@ import UserInfo from "./pages/UserInfo.jsx";
 import { Header } from "./components/Header";
 import { Explore } from './pages/Explore';
 import { Home } from "./pages/Home";
-import { auth } from "./auth/firebase";
-import { checkAuthState, fetchUserData } from "./services/userService";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { useTheme } from './contexts/ThemeContext.jsx';
+import { ThemeProvider } from "./contexts/ThemeContext";
+import GoogleRegisterPage from "./pages/GoogleRegisterPage";
+import LoadingSpinner from "./components/common/LoadingSpinner";
+import Footer from "./components/common/Footer";
+import { CursorGlow } from "./components/effects/CursorGlow";
 
-function App() {
-    const [userData, setUserData] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
+// Protected Route bileşeni
+const ProtectedRoute = ({ children }) => {
+    const { user, loading } = useAuth();
+    
+    if (loading) {
+        return <LoadingSpinner />;
+    }
+
+    if (!user) {
+        return <Navigate to="/login" />;
+    }
+
+    return children;
+};
+
+// Public Route bileşeni (sadece giriş yapmamış kullanıcılar için)
+const PublicRoute = ({ children }) => {
+    const { user, loading } = useAuth();
+    
+    if (loading) {
+        return <LoadingSpinner />;
+    }
+
+    if (user) {
+        return <Navigate to="/" />;
+    }
+
+    return children;
+};
+
+// Ana sayfa düzeni
+const MainLayout = ({ children }) => {
+    const { user } = useAuth();
+    const { isDark } = useTheme();
     const location = window.location.pathname;
-
-    // Header'ın gösterilmemesi gereken sayfalar
-    const hideHeaderPaths = ['/login', '/register'];
-
-    useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                try {
-                    const token = await user.getIdToken();
-                    const data = await fetchUserData(token);
-                    setUserData(data);
-                } catch (error) {
-                    console.error("Kullanıcı bilgileri alınamadı:", error);
-                    setUserData(null);
-                }
-            } else {
-                setUserData(null);
-            }
-            setIsLoading(false);
-        });
-
-        return () => unsubscribe();
-    }, []);
-
-    if (isLoading) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-950 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-            </div>
-        );
-    }
-
-    // Kullanıcı giriş yapmamışsa ve login/register sayfasında değilse login'e yönlendir
-    if (!userData && !hideHeaderPaths.includes(location)) {
-        return <Navigate to="/login" replace />;
-    }
+    const hideHeaderPaths = ['/login', '/register', '/google-register'];
 
     return (
+        <div className="min-h-screen bg-white text-slate-800 dark:bg-slate-950 dark:text-slate-200">
+            <CursorGlow/>
+            {user && !hideHeaderPaths.includes(location) && <Header user={user} />}
+
+            <main className="container mx-auto px-4 py-8">
+                <div className="max-w-6xl mx-auto">{children}</div>
+            </main>
+
+            {user && !hideHeaderPaths.includes(location) && <Footer />}
+        </div>
+    );
+};
+
+function AppContent() {
+    return (
+        <MainLayout>
+            <Routes>
+                <Route path="/login" element={
+                    <PublicRoute>
+                        <LoginPage />
+                    </PublicRoute>
+                } />
+                <Route path="/register" element={
+                    <PublicRoute>
+                        <RegisterPage />
+                    </PublicRoute>
+                } />
+                <Route path="/google-register" element={
+                    <PublicRoute>
+                        <GoogleRegisterPage />
+                    </PublicRoute>
+                } />
+                <Route path="/me" element={
+                    <ProtectedRoute>
+                        <UserInfo />
+                    </ProtectedRoute>
+                } />
+                <Route path="/explore" element={
+                    <ProtectedRoute>
+                        <Explore />
+                    </ProtectedRoute>
+                } />
+                <Route path="/" element={
+                    <ProtectedRoute>
+                        <Home />
+                    </ProtectedRoute>
+                } />
+                <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+        </MainLayout>
+    );
+}
+
+function App() {
+    return (
         <Router>
-            <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-950 text-slate-200">
-                {/* Header'ı sadece kullanıcı giriş yapmışsa ve login/register sayfalarında değilse göster */}
-                {userData && !hideHeaderPaths.includes(location) && <Header user={userData} />}
-
-                <main className="container mx-auto px-4 py-8">
-                    <div className="max-w-6xl mx-auto">
-                        <Routes>
-                            <Route path="/login" element={<LoginPage onUserFetched={setUserData} />} />
-                            <Route path="/register" element={<RegisterPage onUserFetched={setUserData} />} />
-                            <Route path="/me" element={userData ? <UserInfo user={userData} /> : <Navigate to="/login" />} />
-                            <Route path="/explore" element={userData ? <Explore /> : <Navigate to="/login" />} />
-                            <Route path="/" element={userData ? <Home currentUser={userData} /> : <Navigate to="/login" />} />
-                            <Route path="*" element={<Navigate to="/login" replace />} />
-                        </Routes>
-                    </div>
-                </main>
-
-                {/* Footer'ı sadece kullanıcı giriş yapmışsa ve login/register sayfalarında değilse göster */}
-                {userData && !hideHeaderPaths.includes(location) && (
-                    <footer className="bg-slate-900/60 backdrop-blur-sm border-t border-slate-800 py-8">
-                        <div className="container mx-auto px-4">
-                            <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-                                <p className="text-slate-400 text-sm">© 2025 CAI. All rights reserved.</p>
-                                <div className="flex items-center gap-6">
-                                    <a href="#" className="text-slate-400 hover:text-white text-sm transition-colors">Terms</a>
-                                    <a href="#" className="text-slate-400 hover:text-white text-sm transition-colors">Privacy</a>
-                                    <a href="#" className="text-slate-400 hover:text-white text-sm transition-colors">Help</a>
-                                    <a href="#" className="text-slate-400 hover:text-white text-sm transition-colors">Contact</a>
-                                </div>
-                            </div>
-                        </div>
-                    </footer>
-                )}
-            </div>
+            <AuthProvider>
+                <ThemeProvider>
+                <AppContent />
+                </ThemeProvider>
+            </AuthProvider>
         </Router>
     );
 }

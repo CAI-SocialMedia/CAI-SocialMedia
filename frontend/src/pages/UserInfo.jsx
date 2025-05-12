@@ -1,10 +1,33 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { authService } from "../services/authService";
+import { useNavigate } from "react-router-dom";
 import { ArrowLeft, User, Mail, Key, CreditCard, Calendar } from 'lucide-react';
 import { Avatar } from '../components/Avatar';
 
-export default function UserInfo({ user }) {
+export default function UserInfo() {
+    const { user, setUser } = useAuth();
     const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState("");
+
+    const handleLogout = async () => {
+        try {
+            setIsLoading(true);
+            await authService.logout();
+            setUser(null);
+            navigate("/login");
+        } catch (error) {
+            console.error("Çıkış yapılırken hata oluştu:", error);
+            setError("Çıkış yapılırken bir hata oluştu");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    if (!user) {
+        return <div>Yükleniyor...</div>;
+    }
 
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString('tr-TR', {
@@ -36,7 +59,7 @@ export default function UserInfo({ user }) {
                     <div className="flex items-center gap-6 mb-8">
                         <Avatar user={user} size="xlg" />
                         <div>
-                            <h2 className="text-2xl font-bold mb-1">{user.displayName}</h2>
+                            <h2 className="text-2xl font-bold mb-1">{user.displayName || user.username}</h2>
                             <p className="text-slate-400">{user.email}</p>
                         </div>
                     </div>
@@ -95,6 +118,18 @@ export default function UserInfo({ user }) {
                                 {JSON.stringify(user, null, 2)}
                             </pre>
                         </details>
+                    </div>
+
+                    {error && <div className="error-message">{error}</div>}
+
+                    <div className="user-info-actions">
+                        <button
+                            className="logout-button"
+                            onClick={handleLogout}
+                            disabled={isLoading}
+                        >
+                            {isLoading ? "Çıkış Yapılıyor..." : "Çıkış Yap"}
+                        </button>
                     </div>
                 </div>
             </div>

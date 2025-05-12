@@ -1,72 +1,80 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthLayout from "../components/layouts/AuthLayout";
-import { authenticate, authenticateWithGoogle } from "../services/authService";
-import { fetchUserData } from "../services/userService";
+import { authService } from "../services/authService";
+import { useAuth } from "../contexts/AuthContext";
 import { firebaseErrorMessages } from "../utils/firebaseErrorMessages";
-import { updateProfile } from "firebase/auth";
+import { generateSafeUsername } from "../utils/stringUtils.js";
+import api from "../api/axios";
+import GoogleButton from "../components/auth/GoogleButton";
+import AuthForm from "../components/auth/AuthForm";
 import "../styles/Auth.css";
 
-export default function RegisterPage({ onUserFetched }) {
-    const [username, setUsername] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [errorMessage, setErrorMessage] = useState("");
+export default function RegisterPage() {
+    const [formData, setFormData] = useState({
+        email: "",
+        password: "",
+        confirmPassword: "",
+        username: ""
+    });
+    const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
+    const { setUser } = useAuth();
 
-    const validateUsername = (username) => {
-        // Sadece küçük harf, sayı, nokta ve alt tire içerebilir
-        const usernameRegex = /^[a-z0-9._]+$/;
-        
-        if (username.length < 4) {
-            return "Kullanıcı adı en az 4 karakter olmalıdır";
-        }
-        
-        if (!usernameRegex.test(username)) {
-            return "Kullanıcı adı sadece küçük harf, sayı, nokta ve alt tire içerebilir";
-        }
-
-        return null;
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
     };
 
-    const handleRegister = async (e) => {
-        e.preventDefault();
-        setErrorMessage("");
+    const validateUsername = async (username) => {
+        try {
+            // Username'i güvenli formata dönüştür
+            const safeUsername = generateSafeUsername(username);
+            const response = await api.post('/user/check-username', { username: safeUsername });
+            return {
+                available: response.data.available,
+                safeUsername
+            };
+        } catch (error) {
+            console.error('Username validation error:', error);
+            return {
+                available: false,
+                safeUsername: null
+            };
+        }
+    };
 
-        // Username validasyonu
-        const usernameError = validateUsername(username);
-        if (usernameError) {
-            setErrorMessage(usernameError);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError("");
+        setIsLoading(true);
+
+        if (formData.password !== formData.confirmPassword) {
+            setError("Şifreler eşleşmiyor");
+            setIsLoading(false);
             return;
         }
 
-        setIsLoading(true);
-
         try {
-            console.log('Firebase Authentication başlatılıyor...');
-            const { token, user: firebaseUser } = await authenticate(email, password, true);
-            console.log('Firebase Authentication başarılı, token alındı');
+            // Username kontrolü
+            const { available, safeUsername } = await validateUsername(formData.username);
+            if (!available) {
+                setError("Bu kullanıcı adı zaten kullanılıyor. Lütfen başka bir kullanıcı adı seçiniz.");
+                setIsLoading(false);
+                return;
+            }
 
-            // DisplayName'i güncelle
-            const trimmedUsername = username.toLowerCase().trim();
-            console.log('Firebase displayName güncelleniyor:', trimmedUsername);
-            await updateProfile(firebaseUser, {
-                displayName: trimmedUsername
-            });
-            console.log('Firebase displayName güncellendi');
-
-            console.log('Kullanıcı bilgileri alınıyor/oluşturuluyor...');
-            const user = await fetchUserData(token, trimmedUsername);
-            console.log('Kullanıcı bilgileri başarıyla alındı/oluşturuldu:', user);
-
-            onUserFetched(user);
+            const { user, token } = await authService.register(formData.email, formData.password, safeUsername);
+            setUser(user);
             navigate("/");
         } catch (error) {
-            console.error('Kayıt işlemi sırasında hata:', error);
-            const firebaseCode = error.code || error.message;
-            const translatedMessage = firebaseErrorMessages[firebaseCode] || "Kayıt işlemi başarısız oldu: " + error.message;
-            setErrorMessage(translatedMessage);
+            console.error("Kayıt işlemi sırasında hata:", error);
+            const errorMessage = firebaseErrorMessages[error.code] || error.message;
+            setError(errorMessage);
         } finally {
             setIsLoading(false);
         }
@@ -74,18 +82,36 @@ export default function RegisterPage({ onUserFetched }) {
 
     const handleGoogleRegister = async () => {
         setIsLoading(true);
-        setErrorMessage("");
+        setError("");
 
         try {
-            const { token, user } = await authenticateWithGoogle();
-            const userData = await fetchUserData(token, user.displayName);
-            onUserFetched(userData);
+            const { user, token, needsRegistration } = await authService.loginWithGoogle();
+
+            if (needsRegistration) {
+                const currentUser = await authService.getCurrentUser();
+                navigate("/google-register", {
+                    state: {
+                        email: currentUser.email,
+                        displayName: currentUser.displayName,
+                        photoURL: currentUser.photoURL,
+                        uid: currentUser.uid
+                    }
+                });
+                return;
+            }
+            setUser(user);
             navigate("/");
         } catch (error) {
             console.error('Google kayıt işlemi sırasında hata:', error);
-            const firebaseCode = error.code || error.message;
-            const translatedMessage = firebaseErrorMessages[firebaseCode] || "Google ile kayıt başarısız oldu.";
-            setErrorMessage(translatedMessage);
+            // Eğer kullanıcı zaten kayıtlıysa, giriş sayfasına yönlendir
+            if (error.message.includes('kayıtlı bir kullanıcı bulunamadı')) {
+                setError('Bu Google hesabı zaten kayıtlı. Lütfen giriş yapın.');
+                setTimeout(() => {
+                    navigate('/login');
+                }, 2000);
+            } else {
+                setError(error.message || 'Kayıt işlemi sırasında bir hata oluştu');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -95,76 +121,67 @@ export default function RegisterPage({ onUserFetched }) {
         <AuthLayout>
             <div className="auth-form register-page">
                 <h1 className="auth-title">Kayıt Ol</h1>
-                <p className="auth-subtitle">Başlamak için lütfen bilgilerinizi giriniz</p>
+                <p className="auth-subtitle">Yeni bir hesap oluşturun</p>
 
-                <form onSubmit={handleRegister}>
-                    <div className="auth-input-group">
+                <AuthForm
+                    formData={formData}
+                    error={error}
+                    isLoading={isLoading}
+                    onSubmit={handleSubmit}
+                    onChange={handleChange}
+                    submitButtonText="Kayıt Ol"
+                    loadingButtonText="Kayıt Yapılıyor..."
+                >
                         <input
                             type="text"
-                            placeholder="Kullanıcı adı"
+                            name="username"
+                            placeholder="Kullanıcı Adı"
                             className="auth-input"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                            value={formData.username}
+                            onChange={handleChange}
                             required
-                            minLength={4}
-                            pattern="[a-z0-9._]+"
-                            title="Sadece küçük harf, sayı, nokta ve alt tire kullanabilirsiniz"
                         />
                         <input
                             type="email"
+                            name="email"
                             placeholder="E-posta"
                             className="auth-input"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            value={formData.email}
+                            onChange={handleChange}
                             required
                         />
                         <input
                             type="password"
+                            name="password"
                             placeholder="Şifre"
                             className="auth-input"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            value={formData.password}
+                            onChange={handleChange}
                             required
                         />
-                        <p className="auth-hint">
-                            *Kullanıcı adı en az 4 karakter olmalıdır ve sadece küçük harf, sayı, nokta ve alt tire
-                            içerebilir
-                        </p>
-                        <p className="auth-hint">
-                            *Şifre rakamlar, küçük-büyük harfler ve özel karakter içermelidir
-                        </p>
-                    </div>
-
-                    {errorMessage && <div className="auth-error">{errorMessage}</div>}
-
-                    <button
-                        type="submit"
-                        className="auth-button primary"
-                        disabled={isLoading}
-                    >
-                        {isLoading ? "Kayıt Yapılıyor..." : "Hesap Oluştur"}
-                    </button>
+                        <input
+                            type="password"
+                            name="confirmPassword"
+                            placeholder="Şifre Tekrar"
+                            className="auth-input"
+                            value={formData.confirmPassword}
+                            onChange={handleChange}
+                            required
+                        />
+                </AuthForm>
 
                     <div className="auth-divider">
                         <span>veya</span>
                     </div>
 
-                    <button 
-                        type="button" 
-                        className="auth-button google"
+                <GoogleButton
                         onClick={handleGoogleRegister}
                         disabled={isLoading}
-                    >
-                        <img
-                            src="https://developers.google.com/identity/images/g-logo.png"
-                            alt="Google"
-                            className="google-icon"
-                        />
-                        Google ile Kayıt Ol
-                    </button>
+                    text="Google ile Kayıt Ol"
+                />
 
                     <div className="auth-footer">
-                        <span>Zaten üye misiniz?</span>
+                        <span>Zaten hesabınız var mı?</span>
                         <button
                             type="button"
                             className="auth-link"
@@ -173,7 +190,6 @@ export default function RegisterPage({ onUserFetched }) {
                             Giriş Yap
                         </button>
                     </div>
-                </form>
             </div>
         </AuthLayout>
     );

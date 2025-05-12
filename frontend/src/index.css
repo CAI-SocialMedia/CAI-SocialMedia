@@ -25,6 +25,31 @@
   }
 }
 
+@layer components {
+  /* Tüm butonlar ve interaktif elementler için hover ışıma efekti */
+  .btn, button:not(.no-glow), a:not(.no-glow), .interactive-item {
+    @apply relative transition-all duration-300;
+  }
+
+  .btn:hover, button:not(.no-glow):hover, a:not(.no-glow):hover, .interactive-item:hover {
+    @apply shadow-glow;
+  }
+  
+  /* Link ve interaktif elementler için hover ışıma efekti */
+  a:not(.no-glow):hover, .link:hover {
+    @apply text-purple-500 transition-colors duration-300;
+  }
+  
+  /* Kart ve container elementler için hover geçiş efektleri */
+  .card, .hover-container {
+    @apply transition-transform duration-300 ease-out;
+  }
+  
+  .card:hover, .hover-container:hover {
+    @apply transform scale-[1.02] shadow-glow;
+  }
+}
+
 @layer utilities {
   .animate-gradient {
     background-size: 200% 200%;
@@ -41,5 +66,14 @@
     100% {
       background-position: 0% 50%;
     }
+  }
+  
+  .glow-text {
+    text-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
+  }
+  
+  .glow-border {
+    @apply border border-purple-500;
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
   }
 }

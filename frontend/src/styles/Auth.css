@@ -1,3 +1,4 @@
+/* Common styles for all auth pages */
 .auth-form {
     background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(10px);
@@ -9,72 +10,19 @@
     border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-/* Login sayfası için özel stiller */
-.login-page .auth-form {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(249, 250, 251, 0.95));
-    border-left: 4px solid #8b5cf6;
-}
-
-.login-page .auth-title {
-    color: #8b5cf6;
-    font-size: 2rem;
-    margin-bottom: 1.5rem;
-    text-align: center;
-}
-
-.login-page .auth-button.primary {
-    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-    border: none;
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.login-page .auth-button.primary:hover {
-    background: linear-gradient(135deg, #7c3aed, #6d28d9);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
-}
-
-/* Register sayfası için özel stiller */
-.register-page .auth-form {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(249, 250, 251, 0.95));
-    border-left: 4px solid #ec4899;
-}
-
-.register-page .auth-title {
-    color: #ec4899;
+.auth-title {
     font-size: 2rem;
     margin-bottom: 1rem;
     text-align: center;
 }
 
-.register-page .auth-subtitle {
+.auth-subtitle {
     color: #6b7280;
     text-align: center;
     margin-bottom: 2rem;
     font-size: 0.95rem;
 }
 
-.register-page .auth-button.primary {
-    background: linear-gradient(135deg, #ec4899, #db2777);
-    border: none;
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.register-page .auth-button.primary:hover {
-    background: linear-gradient(135deg, #db2777, #be185d);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
-}
-
-/* Ortak stiller */
 .auth-input-group {
     display: flex;
     flex-direction: column;
@@ -109,6 +57,15 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+}
+
+.auth-button.primary {
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
 }
 
 .auth-button:disabled {
@@ -188,4 +145,113 @@
     color: #6b7280;
     font-size: 0.8rem;
     margin-top: 0.2rem;
+}
+
+/* Login page specific styles */
+.login-page .auth-form {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(249, 250, 251, 0.95));
+    border-left: 4px solid #8b5cf6;
+}
+
+.login-page .auth-title {
+    color: #8b5cf6;
+}
+
+.login-page .auth-button.primary {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.login-page .auth-button.primary:hover {
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+/* Register page specific styles */
+.register-page .auth-form {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(249, 250, 251, 0.95));
+    border-left: 4px solid #ec4899;
+}
+
+.register-page .auth-title {
+    color: #ec4899;
+}
+
+.register-page .auth-button.primary {
+    background: linear-gradient(135deg, #ec4899, #db2777);
+}
+
+.register-page .auth-button.primary:hover {
+    background: linear-gradient(135deg, #db2777, #be185d);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+}
+
+/* Google Register page specific styles */
+.google-register-page .auth-form {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(249, 250, 251, 0.95));
+    border-left: 4px solid #3b82f6;
+}
+
+.google-register-page .auth-title {
+    color: #3b82f6;
+}
+
+.google-register-page .auth-button.primary {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.google-register-page .auth-button.primary:hover {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.google-register-page .auth-button.primary:disabled {
+    background: linear-gradient(135deg, #93c5fd, #60a5fa);
+    transform: none;
+    box-shadow: none;
+}
+
+.google-register-page .auth-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Validation styles */
+.border-red-500 {
+    border-color: #ef4444 !important;
+}
+
+.border-green-500 {
+    border-color: #10b981 !important;
+}
+
+.text-green-500 {
+    color: #10b981;
+}
+
+.text-red-500 {
+    color: #ef4444;
+}
+
+/* Positioning utilities */
+.relative {
+    position: relative;
+}
+
+.absolute {
+    position: absolute;
+}
+
+.right-3 {
+    right: 0.75rem;
+}
+
+.top-1\/2 {
+    top: 50%;
+}
+
+.transform {
+    transform: translateY(-50%);
 } 

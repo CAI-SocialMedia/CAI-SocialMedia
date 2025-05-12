@@ -1,5 +1,10 @@
+import React from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { ImagePlus } from "lucide-react";
+import { Button } from "../components/ui/Button.jsx";
 
-export const Home = () => {
+export function Home() {
+    const { user } = useAuth();
 
     return (
         <div className="space-y-8">
@@ -10,18 +15,20 @@ export const Home = () => {
                         <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent animate-gradient">
                             Turn Your Imagination Into Art
                         </h1>
-                        <p className="text-lg text-slate-300 mb-6">
+                        <p className="text-lg text-slate-600 dark:text-slate-300 mb-6">
                             Describe your vision and watch as our AI transforms your words into stunning images. From fantastical landscapes to futuristic scenes, anything is possible.
                         </p>
 
-                        <button
-                            className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white font-medium py-3 px-6 rounded-lg transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
+                        <Button
+                            variant="primary"
+                            size="lg"
+                            className="hidden sm:flex items-center gap-2 shadow-md"
                         >
-                            Şimdi oluşturun
-                        </button>
+                            Şimdi Oluşturun
+                        </Button>
                     </div>
                 </div>
             </section>
         </div>
     );
-};
+}
