@@ -1,5 +1,6 @@
 package com.cai.socialmedia.service;
 
+import com.cai.socialmedia.dto.PublicUserDTO;
 import com.cai.socialmedia.dto.UpdateUserRequestDTO;
 import com.cai.socialmedia.dto.UserDTO;
 import com.cai.socialmedia.enums.Role;
@@ -12,8 +13,12 @@ import com.google.cloud.Timestamp;
 import com.google.firebase.auth.FirebaseToken;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -197,5 +202,10 @@ public class UserService {
         } catch (Exception e) {
             log.error("Kredi yenileme işlemi sırasında hata oluştu: {}", e.getMessage());
         }
+    }
+
+    public PublicUserDTO getPublicUserByUid(String userUid) {
+        return userRepository.getPublicUserByUid(userUid)
+                .orElseThrow(() -> new ApiException("Kullanıcı bulunamadı"));
     }
 }

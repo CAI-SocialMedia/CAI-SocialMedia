@@ -22,6 +22,7 @@ class AuthService {
 
             const token = await user.getIdToken(true);
             localStorage.setItem('authToken', token); // tutarlılık için 'authToken'
+            console.log(token)
 
             const response = await api.post('/user/register', { username }, {
                 headers: {
@@ -52,6 +53,7 @@ class AuthService {
             const user = userCredential.user;
             const token = await user.getIdToken(true);
             localStorage.setItem('authToken', token);
+            console.log(token)
 
             // Backend'den kullanıcı bilgilerini al
             const response = await api.get('/user/me', {
@@ -80,6 +82,7 @@ class AuthService {
             // Token al
             const token = await user.getIdToken(true);
             localStorage.setItem('authToken', token);
+            console.log(token)
 
             try {
                 // Kullanıcı backend'de var mı kontrolü
@@ -127,6 +130,7 @@ class AuthService {
             // Token yenile
             const token = await user.getIdToken(true);
             localStorage.setItem('authToken', token);
+            console.log(token)
 
             const response = await api.post('/user/register', {
                 username,
