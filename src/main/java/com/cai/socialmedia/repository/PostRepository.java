@@ -1,6 +1,7 @@
 package com.cai.socialmedia.repository;
 
 import com.cai.socialmedia.dto.PostResponseDTO;
+import com.cai.socialmedia.exception.ApiException;
 import com.cai.socialmedia.model.PostDocument;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
@@ -73,6 +74,33 @@ public class PostRepository {
         }
         return posts;
     }
+
+    public PostDocument getPostByUid(String postUid) throws ExecutionException, InterruptedException {
+        CollectionReference postsRef = db.collection(COLLECTION_NAME);
+
+        ApiFuture<QuerySnapshot> query = postsRef
+                .whereEqualTo("postUid", postUid)
+                .limit(1)
+                .get();
+
+        QuerySnapshot querySnapshot = query.get();
+
+        if (querySnapshot.isEmpty()) {
+            throw new ApiException("Belirtilen post bulunamadı");
+        }
+
+        DocumentSnapshot document = querySnapshot.getDocuments().get(0);
+        return document.toObject(PostDocument.class);
+    }
+
+
+    public void toggleIsDeleted(String postUid, boolean newValue) {
+        DocumentReference docRef = db.collection(COLLECTION_NAME).document(postUid);
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("isDeleted", newValue);
+        docRef.update(updates);
+    }
+
 
     public void incrementLikeCount(String postUid) throws ExecutionException, InterruptedException {
         DocumentReference postRef = db.collection(COLLECTION_NAME).document(postUid);

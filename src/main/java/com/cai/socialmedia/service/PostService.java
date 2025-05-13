@@ -53,6 +53,30 @@ public class PostService {
         }
     }
 
+    public PostDocument getPostByUid(String postUid) {
+        try {
+            return postRepository.getPostByUid(postUid);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new ApiException("Gönderi getirilirken hata oluştu: " + e.getMessage());
+        }
+    }
+
+    public void togglePostDeleted(String userUid, String postUid) {
+        try {
+            String ownerUid = postRepository.findUserByPostUid(postUid);
+            if (!ownerUid.equals(userUid)) {
+                throw new ApiException("Sadece kendi gönderinizi güncelleyebilirsiniz");
+            }
+
+            PostDocument post = postRepository.getPostByUid(postUid);
+            //IsDeleted null değilse ve IsDeleted = true ise -> true
+            boolean current = post.getIsDeleted() != null && post.getIsDeleted();
+            postRepository.toggleIsDeleted(postUid, !current);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new ApiException("Gönderi güncellenirken hata oluştu: " + e.getMessage());
+        }
+    }
+
     public List<PostResponseDTO> getAllPostByUserUid(String targetUserUid) {
         try {
             //TODO: burası sonra geliştirilecek
