@@ -4,9 +4,11 @@ import com.cai.socialmedia.dto.PostCreateRequestDTO;
 import com.cai.socialmedia.dto.PostResponseDTO;
 import com.cai.socialmedia.service.PostService;
 import com.cai.socialmedia.util.ApiResponse;
+import com.cai.socialmedia.util.SecurityUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,22 +21,22 @@ public class PostController {
     private final PostService postService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Void>> createPostByUid(HttpServletRequest request, @RequestBody PostCreateRequestDTO postCreateRequestDTO) {
-        String userUid = (String) request.getAttribute("firebaseUid");
+    public ResponseEntity<ApiResponse<Void>> createPostByUid(@RequestBody PostCreateRequestDTO postCreateRequestDTO) {
+        String userUid = SecurityUtil.getAuthenticatedUidOrThrow();
         postService.createPostByUserId(postCreateRequestDTO, userUid);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @PostMapping("delete/{postUid}")
     public ResponseEntity<ApiResponse<Void>> deleteOnePostByUid(HttpServletRequest request, @PathVariable String postUid) {
-        String userUid = (String) request.getAttribute("firebaseUid");
+        String userUid = SecurityUtil.getAuthenticatedUidOrThrow();
         postService.deleteOnePostByUId(userUid, postUid);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @GetMapping("/{targetUserUid}")
     public ResponseEntity<ApiResponse<List<PostResponseDTO>>> getAllPostByUserUid(HttpServletRequest request, @PathVariable String targetUserUid) {
-        request.getAttribute("firebaseUid");
+        SecurityUtil.getAuthenticatedUidOrThrow();
         List<PostResponseDTO> data = postService.getAllPostByUserUid(targetUserUid);
         return ResponseEntity.ok(ApiResponse.success(data));
     }

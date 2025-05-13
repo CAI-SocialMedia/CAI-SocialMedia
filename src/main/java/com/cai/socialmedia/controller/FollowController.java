@@ -3,9 +3,10 @@ package com.cai.socialmedia.controller;
 import com.cai.socialmedia.dto.FollowInfoDTO;
 import com.cai.socialmedia.util.ApiResponse;
 import com.cai.socialmedia.service.FollowService;
-import jakarta.servlet.http.HttpServletRequest;
+import com.cai.socialmedia.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,30 +19,30 @@ public class FollowController {
     private final FollowService followService;
 
     @PostMapping("/{targetUid}")
-    public ResponseEntity<ApiResponse<Void>> follow(HttpServletRequest request, @PathVariable String targetUid) {
-        String followerUid = (String) request.getAttribute("firebaseUid");
+    public ResponseEntity<ApiResponse<Void>> follow( @PathVariable String targetUid) {
+        String followerUid = SecurityUtil.getAuthenticatedUidOrThrow();
         followService.followUser(followerUid, targetUid);
         return ResponseEntity.ok(ApiResponse.success("Takip edildi.", null));
     }
 
     @DeleteMapping("/{targetUid}")
-    public ResponseEntity<ApiResponse<Void>> unfollow(HttpServletRequest request, @PathVariable String targetUid) {
-        String followerUid = (String) request.getAttribute("firebaseUid");
+    public ResponseEntity<ApiResponse<Void>> unfollow( @PathVariable String targetUid) {
+        String followerUid = SecurityUtil.getAuthenticatedUidOrThrow();
         followService.unfollowUser(followerUid, targetUid);
         return ResponseEntity.ok(ApiResponse.success("Takipten çıkıldı.", null));
     }
 
-    @GetMapping("/followers/{uid}")
-    public ResponseEntity<ApiResponse<List<FollowInfoDTO>>> getFollowersList(HttpServletRequest request, @PathVariable String uid) {
-        request.getAttribute("firebaseUid");
-        List<FollowInfoDTO> followers = followService.getFollowers(uid);
+    @GetMapping("/followers/{userUid}")
+    public ResponseEntity<ApiResponse<List<FollowInfoDTO>>> getFollowersList( @PathVariable String userUid) {
+         SecurityUtil.getAuthenticatedUidOrThrow();
+        List<FollowInfoDTO> followers = followService.getFollowers(userUid);
         return ResponseEntity.ok(ApiResponse.success(followers));
     }
 
-    @GetMapping("/following/{uid}")
-    public ResponseEntity<ApiResponse<List<FollowInfoDTO>>> getFollowingList(HttpServletRequest request, @PathVariable String uid) {
-        request.getAttribute("firebaseUid");
-        List<FollowInfoDTO> following = followService.getFollowing(uid);
+    @GetMapping("/following/{userUid}")
+    public ResponseEntity<ApiResponse<List<FollowInfoDTO>>> getFollowingList( @PathVariable String userUid) {
+        SecurityUtil.getAuthenticatedUidOrThrow();
+        List<FollowInfoDTO> following = followService.getFollowing(userUid);
         return ResponseEntity.ok(ApiResponse.success(following));
     }
 

@@ -1,10 +1,13 @@
 package com.cai.socialmedia.controller;
 
+import com.cai.socialmedia.dto.PublicUserDTO;
 import com.cai.socialmedia.dto.UpdateUserRequestDTO;
 import com.cai.socialmedia.dto.UserDTO;
 import com.cai.socialmedia.model.UserDocument;
 import com.cai.socialmedia.service.UserService;
 import com.cai.socialmedia.exception.ApiException;
+import com.cai.socialmedia.util.ApiResponse;
+import com.cai.socialmedia.util.SecurityUtil;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
@@ -28,7 +31,7 @@ public class UserController {
     // Kullanıcı Bilgileri
     @GetMapping("/me")
     public ResponseEntity<UserDTO> getCurrentUser() {
-        String uid = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String uid = SecurityUtil.getAuthenticatedUidOrThrow();
         return ResponseEntity.ok(userService.getUserDtoByUid(uid));
     }
 
@@ -56,7 +59,7 @@ public class UserController {
 
     @PutMapping("/update")
     public ResponseEntity<UserDTO> updateUser(HttpServletRequest request, @RequestBody Map<String, String> body) {
-        String uid = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String uid = SecurityUtil.getAuthenticatedUidOrThrow();
         String username = body.get("username");
         String displayName = body.get("displayName");
         String profilePhotoUid = body.get("profilePhotoUid");
@@ -87,5 +90,12 @@ public class UserController {
             return header.substring(7);
         }
         throw new ApiException("Geçersiz veya eksik Authorization header");
+    }
+// gidiyorum aslkımbb ta
+    @GetMapping("/public/{userUid}")
+    public ResponseEntity<ApiResponse<PublicUserDTO>> getPublicUserByUid(@PathVariable String userUid) {
+        SecurityUtil.getAuthenticatedUidOrThrow();
+        PublicUserDTO fullUser = userService.getPublicUserByUid(userUid);
+        return ResponseEntity.ok(ApiResponse.success(fullUser));
     }
 }
