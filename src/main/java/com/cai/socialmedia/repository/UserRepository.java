@@ -1,5 +1,6 @@
 package com.cai.socialmedia.repository;
 
+import com.cai.socialmedia.dto.PublicUserDTO;
 import com.cai.socialmedia.dto.UpdateUserRequestDTO;
 import com.cai.socialmedia.enums.SubscriptionType;
 import com.cai.socialmedia.exception.ApiException;
@@ -159,4 +160,40 @@ public class UserRepository {
         }
     }
 
+    public Optional<PublicUserDTO> getPublicUserByUid(String uid) {
+        try {
+            DocumentSnapshot snapshot = db.collection(COLLECTION_NAME)
+                    .document(uid)
+                    .get()
+                    .get();
+
+            if (!snapshot.exists()) {
+                log.warn("Firestore'da kullanıcı bulunamadı. UID: {}", uid);
+                return Optional.empty();
+            }
+
+            UserDocument user = snapshot.toObject(UserDocument.class);
+
+            if (user == null) {
+                log.error("Firestore snapshot toObject dönüşü null. UID: {}", uid);
+                return Optional.empty();
+            }
+
+            if (Boolean.TRUE.equals(user.getIsDeleted())) {
+                log.info("Kullanıcı silinmiş durumda. UID: {}", uid);
+                return Optional.empty();
+            }
+
+            PublicUserDTO publicUser = PublicUserDTO.builder()
+                    .displayName(user.getDisplayName())
+                    .profilePhotoUid(user.getProfilePhotoUid())
+                    .build();
+
+            return Optional.of(publicUser);
+        } catch (Exception e) {
+            log.error("Kullanıcıyı Firestore'dan çekerken hata oluştu. UID: {}, Hata: {}", uid, e.getMessage(), e);
+            return Optional.empty();
+        }
+    }
 }
+
