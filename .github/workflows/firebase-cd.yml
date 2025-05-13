@@ -58,4 +58,5 @@ jobs:
             --platform managed \
             --region europe-west4 \
             --allow-unauthenticated \
-            --port 8080
+            --port 8080 \
+            --set-env-vars="REPLICATE_API_TOKEN=${{ secrets.REPLICATE_API_TOKEN }}"
