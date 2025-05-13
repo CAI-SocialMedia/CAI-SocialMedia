@@ -41,6 +41,13 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
+    @PostMapping("/toggle-post")
+    public ResponseEntity<ApiResponse<Void>> togglePost(@RequestParam String postUid) {
+        String userUid = SecurityUtil.getAuthenticatedUidOrThrow();
+        postService.togglePostDeleted(userUid, postUid);
+        return ResponseEntity.ok(ApiResponse.success("Gönderi durumu güncellendi", null));
+    }
+
     //geliştirimi sonra yapılacak
     /*@GetMapping("/feed")
     public ResponseEntity<ApiResponse<List<PostResponseDTO>>> getFeedPosts(HttpServletRequest request) {
