@@ -21,5 +21,6 @@ public class PostResponseDTO {
     private Integer commentCount;
     private Boolean isLikedByMe;
     private Boolean isPublic;
+    private Boolean isDeleted;
     private String createdAt;
 }
