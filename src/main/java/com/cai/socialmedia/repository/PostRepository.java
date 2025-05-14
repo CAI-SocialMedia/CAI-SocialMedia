@@ -1,6 +1,9 @@
 package com.cai.socialmedia.repository;
 
 import com.cai.socialmedia.dto.PostResponseDTO;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.cai.socialmedia.exception.ApiException;
 import com.cai.socialmedia.model.PostDocument;
 import com.google.api.core.ApiFuture;
@@ -8,10 +11,7 @@ import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 @Repository
@@ -19,7 +19,7 @@ public class PostRepository {
 
     private static final String COLLECTION_NAME = "posts";
     private final Firestore db = FirestoreClient.getFirestore();
-
+    private static final Logger log = LoggerFactory.getLogger(PostRepository.class);
 
     public void save(PostDocument postDocument) {
         db.collection(COLLECTION_NAME)
@@ -76,21 +76,14 @@ public class PostRepository {
     }
 
     public PostDocument getPostByUid(String postUid) throws ExecutionException, InterruptedException {
-        CollectionReference postsRef = db.collection(COLLECTION_NAME);
+        DocumentReference docRef = db.collection(COLLECTION_NAME).document(postUid);
+        DocumentSnapshot snapshot = docRef.get().get();
 
-        ApiFuture<QuerySnapshot> query = postsRef
-                .whereEqualTo("postUid", postUid)
-                .limit(1)
-                .get();
-
-        QuerySnapshot querySnapshot = query.get();
-
-        if (querySnapshot.isEmpty()) {
+        if (!snapshot.exists()) {
             throw new ApiException("Belirtilen post bulunamadı");
         }
 
-        DocumentSnapshot document = querySnapshot.getDocuments().get(0);
-        return document.toObject(PostDocument.class);
+        return snapshot.toObject(PostDocument.class);
     }
 
 
@@ -114,5 +107,36 @@ public class PostRepository {
         Map<String, Object> updates = new HashMap<>();
         updates.put("likeCount", FieldValue.increment(-1));
         postRef.update(updates).get();
+    }
+
+    public PostResponseDTO getPostByPostUid(String postUid) throws ExecutionException, InterruptedException {
+        DocumentReference docRef = db.collection(COLLECTION_NAME).document(postUid);
+        DocumentSnapshot snapshot = docRef.get().get();
+
+        if (!snapshot.exists()) {
+            log.warn("Post bulunamadı. UID: {}", postUid);
+            return null;
+        }
+
+        PostDocument postRequest = snapshot.toObject(PostDocument.class);
+
+        if (Boolean.TRUE.equals(postRequest.getIsDeleted())) {
+            log.info("Post silinmiş durumda. UID: {}", postUid);
+            return null;
+        }
+
+        return PostResponseDTO.builder()
+                .postUid(postRequest.getPostUid())
+                .userUid(postRequest.getUserUid())
+                .imageUrl(postRequest.getImageUrl())
+                .prompt(postRequest.getPrompt())
+                .caption(postRequest.getCaption())
+                .likeCount(postRequest.getLikeCount())
+                .commentCount(postRequest.getCommentCount())
+                .isLikedByMe(postRequest.getIsLikedByMe())
+                .isPublic(postRequest.getIsPublic())
+                .createdAt(postRequest.getCreatedAt())
+                .build();
+
     }
 }

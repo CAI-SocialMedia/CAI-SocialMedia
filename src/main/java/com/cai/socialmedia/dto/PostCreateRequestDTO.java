@@ -11,8 +11,4 @@ public class PostCreateRequestDTO {
     private String imageUrl;
     private String prompt;
     private String caption;
-
-    private Boolean isPublic = true;
-    private Boolean isDeleted = true;
-    private Boolean isLikedByMe = false;
 }

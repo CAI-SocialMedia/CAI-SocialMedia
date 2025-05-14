@@ -35,7 +35,7 @@ public class PostController {
     }
 
     @GetMapping("/{targetUserUid}")
-    public ResponseEntity<ApiResponse<List<PostResponseDTO>>> getAllPostByUserUid(HttpServletRequest request, @PathVariable String targetUserUid) {
+    public ResponseEntity<ApiResponse<List<PostResponseDTO>>> getAllPostByUserUid(@PathVariable String targetUserUid) {
         SecurityUtil.getAuthenticatedUidOrThrow();
         List<PostResponseDTO> data = postService.getAllPostByUserUid(targetUserUid);
         return ResponseEntity.ok(ApiResponse.success(data));
@@ -46,6 +46,13 @@ public class PostController {
         String userUid = SecurityUtil.getAuthenticatedUidOrThrow();
         postService.togglePostDeleted(userUid, postUid);
         return ResponseEntity.ok(ApiResponse.success("Gönderi durumu güncellendi", null));
+    }
+
+    @GetMapping("/info/{postUid}")
+    public ResponseEntity<ApiResponse<PostResponseDTO>> getOnePostByUid(@PathVariable String postUid) {
+        SecurityUtil.getAuthenticatedUidOrThrow();
+        PostResponseDTO post = postService.getPostByPostUid(postUid);
+        return ResponseEntity.ok(ApiResponse.success("Gönderi bilgileri getirildi", post));
     }
 
     //geliştirimi sonra yapılacak

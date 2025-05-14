@@ -29,7 +29,11 @@ public class PostService {
         post.setImageUrl(postCreateRequestDTO.getImageUrl());
         post.setPrompt(postCreateRequestDTO.getPrompt());
         post.setCaption(postCreateRequestDTO.getCaption());
-        post.setIsPublic(postCreateRequestDTO.getIsPublic());
+        post.setIsPublic(true);
+        post.setIsDeleted(false);
+        post.setLikeCount(0);
+        post.setCommentCount(0);
+        post.setIsLikedByMe(false);
         post.setCreatedAt(DateUtil.formatTimestamp(Timestamp.now()));
 
         postRepository.save(post);
@@ -50,14 +54,6 @@ public class PostService {
             postRepository.softDelete(postUid);
         } catch (InterruptedException | ExecutionException e) {
             throw new ApiException("Gönderi silme aşamasında hata oluştu");
-        }
-    }
-
-    public PostDocument getPostByUid(String postUid) {
-        try {
-            return postRepository.getPostByUid(postUid);
-        } catch (InterruptedException | ExecutionException e) {
-            throw new ApiException("Gönderi getirilirken hata oluştu: " + e.getMessage());
         }
     }
 
@@ -83,6 +79,17 @@ public class PostService {
             return postRepository.getAllPostByUserUid(targetUserUid);
         } catch (InterruptedException | ExecutionException e) {
             throw new ApiException("Gönderileri getirme aşamasında hata oluştu");
+        }
+    }
+
+    public PostResponseDTO getPostByPostUid(String postUid){
+        try {
+            if(!postRepository.doesPostExist(postUid)){
+                throw new ApiException("Gönderi bulunamadı");
+            }
+            return postRepository.getPostByPostUid(postUid);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new ApiException("Gönderi bilgileri getirilirken hata oluştu: " + e);
         }
     }
 }
