@@ -5,13 +5,22 @@ import com.cai.socialmedia.model.PostDocument;
 import com.cai.socialmedia.repository.PostRepository;
 import com.cai.socialmedia.util.DateUtil;
 import com.google.cloud.Timestamp;
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.Bucket;
+import com.google.firebase.cloud.StorageClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,12 +57,17 @@ public class ReplicateService {
             userService.useCredits(userUid, IMAGE_GENERATION_COST);
             String predictionId = createPrediction(prompt);
             String imageUrl = waitForResult(predictionId);
+            byte[] imageBytes = downloadImageBytes(imageUrl);
+            String firebaseImageUrl = uploadToFirebaseStorage(imageBytes, userUid);
+
+
+
 
             PostDocument post = new PostDocument();
             post.setPostUid(UUID.randomUUID().toString());
             post.setUserUid(userUid);
             post.setPrompt(prompt);
-            post.setImageUrl(imageUrl);
+            post.setImageUrl(firebaseImageUrl);
             post.setIsPublic(true);
             post.setIsDeleted(false);
             post.setLikeCount(0);
@@ -150,4 +164,28 @@ public class ReplicateService {
 
         throw new ApiException("Görsel oluşturma zaman aşımına uğradı");
     }
+
+    private byte[] downloadImageBytes(String imageUrl) {
+        try (InputStream in = new URL(imageUrl).openStream()) {
+            return IOUtils.toByteArray(in);
+        } catch (IOException e) {
+            throw new ApiException("Görsel indirilemedi: " + e.getMessage());
+        }
+    }
+
+
+    private String uploadToFirebaseStorage(byte[] imageBytes, String userUid) {
+        try {
+            String fileName = "images/" + userUid + "/" + UUID.randomUUID() + ".png";
+            Bucket bucket = StorageClient.getInstance().bucket();
+            Blob blob = bucket.create(fileName, imageBytes, "image/png");
+
+            return String.format("https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media",
+                    bucket.getName(), URLEncoder.encode(blob.getName(), StandardCharsets.UTF_8));
+
+        } catch (Exception e) {
+            throw new ApiException("Firebase Storage yükleme hatası: " + e.getMessage());
+        }
+    }
+
 }

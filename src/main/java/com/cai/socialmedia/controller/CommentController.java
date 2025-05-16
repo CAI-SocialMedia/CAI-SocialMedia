@@ -3,6 +3,7 @@ package com.cai.socialmedia.controller;
 import com.cai.socialmedia.dto.CommentRequestDTO;
 import com.cai.socialmedia.dto.CommentResponseDTO;
 
+import com.cai.socialmedia.exception.ApiException;
 import com.cai.socialmedia.service.CommentService;
 import com.cai.socialmedia.util.ApiResponse;
 import com.cai.socialmedia.util.SecurityUtil;
@@ -13,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/comment")
@@ -36,12 +38,21 @@ public class CommentController {
     }
 
     @PutMapping("/{commentUid}")
-    public ResponseEntity<ApiResponse<CommentResponseDTO>> updateComment(@PathVariable String commentUid,
-            @RequestBody String newComment) {
+    public ResponseEntity<ApiResponse<CommentResponseDTO>> updateComment(
+            @PathVariable String commentUid,
+            @RequestBody Map<String, String> body) {
+
         String userUid = SecurityUtil.getAuthenticatedUidOrThrow();
-        commentService.updateComment(userUid, commentUid, newComment);
+        String newComment = body.get("comment");
+
+        if (newComment == null || newComment.trim().length() < 3) {
+            throw new ApiException("Yorum en az 3 karakter olmalı.");
+        }
+
+        commentService.updateComment(userUid, commentUid, newComment.trim());
         return ResponseEntity.ok(ApiResponse.success("Yorum güncellendi", null));
     }
+
 
     @PostMapping("delete/{commentUid}")
     public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable String commentUid) {

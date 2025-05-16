@@ -52,6 +52,7 @@ public class CommentRepository {
                         .comment(commentDoc.getComment())
                         .createdAt(commentDoc.getCreatedAt())
                         .username(user != null ? user.getDisplayName() : "Bilinmiyor")
+                        .userUid(commentDoc.getUserUid())
                         .profilePhotoUid(user != null ? user.getProfilePhotoUid() : null)
                         .build();
 

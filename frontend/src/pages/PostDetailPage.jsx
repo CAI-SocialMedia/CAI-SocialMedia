@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Heart, MessageCircle, Trash2, Edit, Share2 } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Trash2, Edit, Share2, X } from "lucide-react";
 import { Avatar } from "../components/Avatar";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../api/axios";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import MiniSpinner from "../components/common/MiniSpinner";
+
 
 export default function PostDetailPage() {
     const { postUid } = useParams();
@@ -21,6 +23,51 @@ export default function PostDetailPage() {
     const [showAllComments, setShowAllComments] = useState(false);
     const [isLiking, setIsLiking] = useState(false);
     const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
+    const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+
+    const [editingCommentId, setEditingCommentId] = useState(null);
+    const [editedText, setEditedText] = useState("");
+    const [deletingCommentId, setDeletingCommentId] = useState(null);
+
+
+    const openImageModal = () => {
+        setIsImageModalOpen(true);
+    };
+
+    const closeImageModal = () => {
+        setIsImageModalOpen(false);
+    };
+
+    function handleEditComment(commentUid) {
+        const commentToEdit = comments.find(c => c.commentUid === commentUid);
+        setEditedText(commentToEdit.comment);
+        setEditingCommentId(commentUid);
+    }
+
+    async function handleSaveEditedComment(commentUid) {
+        const trimmed = editedText.trim();
+
+        if (trimmed.length < 3) {
+            toast.error("Yorum en az 3 karakter olmalı.");
+            return;
+        }
+
+        try {
+            setIsCommentSubmitting(true);
+            await api.put(`/comment/${commentUid}`, { comment: trimmed });
+            toast.success("Yorum güncellendi");
+            await fetchComments();
+            setEditingCommentId(null);
+            setEditedText("");
+        } catch (err) {
+            console.error("Yorum güncellenemedi", err);
+            toast.error("Yorum güncellenemedi");
+        } finally {
+            setIsCommentSubmitting(false);
+        }
+    }
+
+
 
     const fetchPost = async () => {
         try {
@@ -126,6 +173,7 @@ export default function PostDetailPage() {
     };
 
     const handleDeleteComment = async (commentUid) => {
+        setDeletingCommentId(commentUid);
         try {
             await api.post(`/comment/delete/${commentUid}`);
             toast.success("Yorum silindi");
@@ -134,6 +182,8 @@ export default function PostDetailPage() {
         } catch (err) {
             console.error("Yorum silinemedi", err);
             toast.error("Yorum silinemedi");
+        } finally {
+            setDeletingCommentId(null);
         }
     };
 
@@ -176,12 +226,12 @@ export default function PostDetailPage() {
             </button>
 
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{opacity: 0, y: 20}}
+                animate={{opacity: 1, y: 0}}
                 className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden"
             >
                 <div className="p-4 sm:p-6 flex items-center gap-4 border-b dark:border-slate-700">
-                    <Avatar user={postOwner} size="md" />
+                    <Avatar user={postOwner} size="md"/>
                     <div className="flex-1">
                         <h2 className="font-bold text-lg text-slate-900 dark:text-white">{postOwner.displayName}</h2>
                         <p className="text-sm text-slate-500 dark:text-slate-400">{new Date(post.createdAt).toLocaleString("tr-TR")}</p>
@@ -191,17 +241,58 @@ export default function PostDetailPage() {
                         className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                         aria-label="Paylaş"
                     >
-                        <Share2 size={20} className="text-slate-600 dark:text-slate-300" />
+                        <Share2 size={20} className="text-slate-600 dark:text-slate-300"/>
                     </button>
                 </div>
 
+                <AnimatePresence>
+                    {isImageModalOpen && post?.imageUrl && (
+                        <motion.div
+                            initial={{opacity: 0}}
+                            animate={{opacity: 1}}
+                            exit={{opacity: 0}}
+                            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+                            onClick={closeImageModal} // Arka plana tıklayınca kapat
+                        >
+                            <motion.div
+                                initial={{scale: 0.5, opacity: 0}}
+                                animate={{scale: 1, opacity: 1}}
+                                exit={{scale: 0.5, opacity: 0}}
+                                transition={{type: "spring", stiffness: 500, damping: 30}}
+                                className="relative max-w-full max-h-full"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <img
+                                    src={post.imageUrl}
+                                    alt="Büyütülmüş Gönderi"
+                                    className="block max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                                />
+                                <button
+                                    onClick={closeImageModal}
+                                    className="absolute top-4 left-1/2 -translate-x-1/2 p-1.5 rounded-full bg-white/70 hover:bg-white text-slate-800 transition-colors"
+                                    aria-label="Görseli kapat"
+                                >
+                                    <X size={20}/>
+                                </button>
+
+
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 <div className="bg-slate-50 dark:bg-slate-900 flex justify-center">
-                    <img
-                        src={post.imageUrl}
-                        alt="Gönderi"
-                        className="max-h-[600px] object-contain"
-                        loading="lazy"
-                    />
+                <button
+                        onClick={openImageModal}
+                        className="p-0 border-0 bg-transparent cursor-pointer"
+                        aria-label="Gönderiyi büyüt"
+                    >
+                        <img
+                            src={post.imageUrl}
+                            alt="Gönderi"
+                            className="max-h-[600px] object-contain"
+                        />
+                    </button>
                 </div>
 
                 <div className="p-4 sm:p-6 space-y-4">
@@ -209,23 +300,28 @@ export default function PostDetailPage() {
                         <motion.button
                             onClick={handleLike}
                             className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300"
-                            whileTap={{ scale: 0.95 }}
+                            whileTap={{scale: 0.95}}
                             disabled={isLiking}
                         >
                             <motion.div
-                                animate={post.isLikedByMe ? { scale: [1, 1.3, 1] } : {}}
-                                transition={{ duration: 0.3 }}
+                                animate={post.isLikedByMe ? {scale: [1, 1.3, 1]} : {}}
+                                transition={{duration: 0.3}}
                             >
-                                <Heart
-                                    size={22}
-                                    className={post.isLikedByMe ? "text-red-500 fill-red-500" : ""}
-                                />
+                                {isLiking ? (
+                                    <MiniSpinner size={4} color="text-red-500"/>
+                                ) : (
+                                    <Heart
+                                        size={22}
+                                        className={post.isLikedByMe ? "text-red-500 fill-red-500" : ""}
+                                    />
+                                )}
                             </motion.div>
                             <span className="font-medium">{post.likeCount}</span>
                         </motion.button>
 
+
                         <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-                            <MessageCircle size={22} />
+                            <MessageCircle size={22}/>
                             <span className="font-medium">{post.commentCount}</span>
                         </div>
                     </div>
@@ -239,12 +335,12 @@ export default function PostDetailPage() {
 
                     <div className="pt-4 border-t dark:border-slate-700">
                         <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">
-                            Yorumlar {comments.length > 0 && `(${comments.length})`}
+                        Yorumlar {comments.length > 0 && `(${comments.length})`}
                         </h3>
 
                         <form onSubmit={handleAddComment} className="mb-6">
                             <div className="flex items-start gap-3">
-                                <Avatar user={user} size="sm" />
+                                <Avatar user={user} size="sm"/>
                                 <div className="flex-1">
                                     <textarea
                                         value={commentText}
@@ -256,10 +352,18 @@ export default function PostDetailPage() {
                                     <button
                                         type="submit"
                                         disabled={isCommentSubmitting || !commentText.trim()}
-                                        className="mt-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 rounded-lg text-white transition-colors"
+                                        className="mt-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 rounded-lg text-white transition-colors flex items-center gap-2"
                                     >
-                                        {isCommentSubmitting ? "Gönderiliyor..." : "Yorum Yap"}
+                                        {isCommentSubmitting ? (
+                                            <>
+                                                <MiniSpinner size={4}/>
+                                                Gönderiliyor...
+                                            </>
+                                        ) : (
+                                            "Yorum Yap"
+                                        )}
                                     </button>
+
                                 </div>
                             </div>
                         </form>
@@ -274,9 +378,9 @@ export default function PostDetailPage() {
                                     {(showAllComments ? comments : comments.slice(0, 3)).map(comment => (
                                         <motion.div
                                             key={comment.commentUid}
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -10 }}
+                                            initial={{opacity: 0, y: 10}}
+                                            animate={{opacity: 1, y: 0}}
+                                            exit={{opacity: 0, y: -10}}
                                             className="bg-slate-50 dark:bg-slate-700 p-4 rounded-lg"
                                         >
                                             <div className="flex justify-between">
@@ -284,7 +388,7 @@ export default function PostDetailPage() {
                                                     <Avatar
                                                         user={{
                                                             profilePhotoUid: comment.profilePhotoUid,
-                                                            displayName: comment.username
+                                                            displayName: comment.username,
                                                         }}
                                                         size="sm"
                                                     />
@@ -295,7 +399,7 @@ export default function PostDetailPage() {
                                                                 day: "numeric",
                                                                 month: "short",
                                                                 hour: "2-digit",
-                                                                minute: "2-digit"
+                                                                minute: "2-digit",
                                                             })}
                                                         </p>
                                                     </div>
@@ -303,21 +407,57 @@ export default function PostDetailPage() {
 
                                                 {comment.userUid === user?.uid && (
                                                     <div className="flex gap-2">
-                                                        <button className="p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
-                                                            <Edit size={16} className="text-slate-600 dark:text-slate-300" />
+                                                        <button
+                                                            onClick={() => handleEditComment(comment.commentUid)}
+                                                            className="p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                                                        >
+                                                            <Edit size={16}
+                                                                  className="text-slate-600 dark:text-slate-300"/>
                                                         </button>
                                                         <button
                                                             onClick={() => handleDeleteComment(comment.commentUid)}
                                                             className="p-1.5 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                                                         >
-                                                            <Trash2 size={16} className="text-red-500" />
+                                                            {deletingCommentId === comment.commentUid ? (
+                                                                <MiniSpinner size={4} color="text-red-500"/>
+                                                            ) : (
+                                                                <Trash2 size={16} className="text-red-500"/>
+                                                            )}
                                                         </button>
+
                                                     </div>
                                                 )}
                                             </div>
-                                            <p className="mt-1 text-slate-700 dark:text-slate-200">{comment.comment}</p>
+
+                                            {editingCommentId === comment.commentUid ? (
+                                                <div>
+                                                    <textarea
+                                                        value={editedText}
+                                                        onChange={(e) => setEditedText(e.target.value)}
+                                                        className="w-full p-2 bg-white dark:bg-slate-800 rounded border"
+                                                    />
+                                                    <button
+                                                        onClick={() => handleSaveEditedComment(comment.commentUid)}
+                                                        className="mt-2 px-3 py-1 bg-green-600 text-white rounded flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        disabled={editedText.trim().length < 3 || isCommentSubmitting}
+                                                    >
+                                                        {isCommentSubmitting ? (
+                                                            <>
+                                                                <MiniSpinner size={4} color="text-white"/>
+                                                                Kaydediliyor...
+                                                            </>
+                                                        ) : (
+                                                            "Kaydet"
+                                                        )}
+                                                    </button>
+
+                                                </div>
+                                            ) : (
+                                                <p className="mt-1 text-slate-700 dark:text-slate-200">{comment.comment}</p>
+                                            )}
                                         </motion.div>
                                     ))}
+
                                 </AnimatePresence>
 
                                 {comments.length > 3 && (

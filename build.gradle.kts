@@ -32,6 +32,7 @@ dependencies {
 
 	//firebase
 	implementation("com.google.firebase:firebase-admin:9.4.3")
+	implementation("org.apache.commons:commons-io:1.3.2") // IOUtils for byte array
 
 	compileOnly("org.projectlombok:lombok")
 	annotationProcessor("org.projectlombok:lombok")
