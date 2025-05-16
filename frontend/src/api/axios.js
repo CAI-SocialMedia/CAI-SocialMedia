@@ -3,9 +3,11 @@ import { auth } from '../auth/firebase.js';
 
 const getBaseUrl = () => {
     // Development ortamında
-
+    if (import.meta.env.DEV) {
         return 'http://localhost:8042/api';
-
+    }
+    // Production ortamında
+    return 'https://socialmedia-backend-237279331001.europe-west4.run.app/api';
 };
 
 const api = axios.create({
