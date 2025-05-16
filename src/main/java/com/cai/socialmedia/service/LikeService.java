@@ -45,7 +45,6 @@ public class LikeService {
 
                 likeRepository.save(like);
             }
-
             postRepository.incrementLikeCount(postUid);
         } catch (InterruptedException | ExecutionException e) {
             throw new ApiException("Gönderiyi beğenirken bir hata oluştu");

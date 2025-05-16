@@ -2,6 +2,7 @@ package com.cai.socialmedia.repository;
 
 import com.cai.socialmedia.dto.PostResponseDTO;
 
+import com.cai.socialmedia.util.SecurityUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.cai.socialmedia.exception.ApiException;
@@ -9,17 +10,24 @@ import com.cai.socialmedia.model.PostDocument;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 @Repository
+
 public class PostRepository {
 
     private static final String COLLECTION_NAME = "posts";
     private final Firestore db = FirestoreClient.getFirestore();
     private static final Logger log = LoggerFactory.getLogger(PostRepository.class);
+    private final LikeRepository likeRepository;
+
+    public PostRepository(LikeRepository likeRepository) {
+        this.likeRepository = likeRepository;
+    }
 
     public void save(PostDocument postDocument) {
         db.collection(COLLECTION_NAME)
@@ -109,6 +117,20 @@ public class PostRepository {
         postRef.update(updates).get();
     }
 
+    public void incrementCommentCount(String postUid) throws ExecutionException, InterruptedException {
+        DocumentReference postRef = db.collection(COLLECTION_NAME).document(postUid);
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("commentCount", FieldValue.increment(1));
+        postRef.update(updates).get();
+    }
+
+    public void decrementCommentCount(String postUid) throws ExecutionException, InterruptedException{
+        DocumentReference postRef = db.collection(COLLECTION_NAME).document(postUid);
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("commentCount", FieldValue.increment(-1));
+        postRef.update(updates).get();
+    }
+
     public PostResponseDTO getPostByPostUid(String postUid) throws ExecutionException, InterruptedException {
         DocumentReference docRef = db.collection(COLLECTION_NAME).document(postUid);
         DocumentSnapshot snapshot = docRef.get().get();
@@ -124,6 +146,12 @@ public class PostRepository {
             log.info("Post silinmiş durumda. UID: {}", postUid);
             return null;
         }
+        String currentUserUid = SecurityUtil.getAuthenticatedUidOrThrow();
+
+        boolean isLikedByMe = likeRepository
+                .findByUserUidAndPostUid(currentUserUid, postUid)
+                .filter(like -> Boolean.FALSE.equals(like.getIsDeleted()))
+                .isPresent();
 
         return PostResponseDTO.builder()
                 .postUid(postRequest.getPostUid())
@@ -133,7 +161,7 @@ public class PostRepository {
                 .caption(postRequest.getCaption())
                 .likeCount(postRequest.getLikeCount())
                 .commentCount(postRequest.getCommentCount())
-                .isLikedByMe(postRequest.getIsLikedByMe())
+                .isLikedByMe(isLikedByMe) // burada dinamik olarak belirledik
                 .isPublic(postRequest.getIsPublic())
                 .createdAt(postRequest.getCreatedAt())
                 .build();

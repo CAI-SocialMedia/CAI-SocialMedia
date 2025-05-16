@@ -50,7 +50,6 @@ public class PostController {
 
     @GetMapping("/info/{postUid}")
     public ResponseEntity<ApiResponse<PostResponseDTO>> getOnePostByUid(@PathVariable String postUid) {
-        SecurityUtil.getAuthenticatedUidOrThrow();
         PostResponseDTO post = postService.getPostByPostUid(postUid);
         return ResponseEntity.ok(ApiResponse.success("Gönderi bilgileri getirildi", post));
     }

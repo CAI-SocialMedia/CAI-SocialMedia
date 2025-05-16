@@ -33,7 +33,6 @@ public class PostService {
         post.setIsDeleted(false);
         post.setLikeCount(0);
         post.setCommentCount(0);
-        post.setIsLikedByMe(false);
         post.setCreatedAt(DateUtil.formatTimestamp(Timestamp.now()));
 
         postRepository.save(post);
@@ -84,12 +83,17 @@ public class PostService {
 
     public PostResponseDTO getPostByPostUid(String postUid){
         try {
-            if(!postRepository.doesPostExist(postUid)){
+            PostResponseDTO post = postRepository.getPostByPostUid(postUid);
+
+            if (post == null) {
                 throw new ApiException("Gönderi bulunamadı");
             }
-            return postRepository.getPostByPostUid(postUid);
+
+            return post;
+
         } catch (InterruptedException | ExecutionException e) {
             throw new ApiException("Gönderi bilgileri getirilirken hata oluştu: " + e);
         }
     }
+
 }

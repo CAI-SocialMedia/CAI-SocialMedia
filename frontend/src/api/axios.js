@@ -3,11 +3,9 @@ import { auth } from '../auth/firebase.js';
 
 const getBaseUrl = () => {
     // Development ortamında
-    if (import.meta.env.DEV) {
+
         return 'http://localhost:8042/api';
-    }
-    // Production ortamında
-    return 'https://socialmedia-backend-237279331001.europe-west4.run.app/api';
+
 };
 
 const api = axios.create({
@@ -27,7 +25,7 @@ api.interceptors.request.use(async (config) => {
     }
 
     // Token'ı localStorage'dan al
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     
     // Eğer token varsa header'a ekle
     if (token) {
@@ -55,7 +53,7 @@ api.interceptors.response.use(
                 const user = auth.currentUser;
                 if (user) {
                     const newToken = await user.getIdToken(true);
-                    localStorage.setItem('token', newToken);
+                    localStorage.setItem('authToken', newToken);
                     
                     // Yeni token ile isteği tekrarla
                     originalRequest.headers.Authorization = `Bearer ${newToken}`;
@@ -67,7 +65,7 @@ api.interceptors.response.use(
 
             // Login veya register sayfasında değilsek yönlendir
             if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
-                localStorage.removeItem('token');
+                localStorage.removeItem('authToken');
                 window.location.href = '/login';
             }
         }

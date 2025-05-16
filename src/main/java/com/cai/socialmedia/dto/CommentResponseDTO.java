@@ -8,8 +8,9 @@ import lombok.*;
 @AllArgsConstructor
 public class CommentResponseDTO {
     private String commentUid;
-    private String userUid;
+    private String username;
     private String comment;
     private String createdAt;
+    private String profilePhotoUid;
 }
 

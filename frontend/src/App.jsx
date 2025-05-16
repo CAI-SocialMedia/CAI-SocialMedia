@@ -13,11 +13,12 @@ import GoogleRegisterPage from "./pages/GoogleRegisterPage";
 import LoadingSpinner from "./components/common/LoadingSpinner";
 import Footer from "./components/common/Footer";
 import { CursorGlow } from "./components/effects/CursorGlow";
+import PostDetailPage from "./pages/PostDetailPage";
 
 // Protected Route bileşeni
 const ProtectedRoute = ({ children }) => {
     const { user, loading } = useAuth();
-    
+
     if (loading) {
         return <LoadingSpinner />;
     }
@@ -32,7 +33,7 @@ const ProtectedRoute = ({ children }) => {
 // Public Route bileşeni (sadece giriş yapmamış kullanıcılar için)
 const PublicRoute = ({ children }) => {
     const { user, loading } = useAuth();
-    
+
     if (loading) {
         return <LoadingSpinner />;
     }
@@ -97,6 +98,11 @@ function AppContent() {
                 <Route path="/" element={
                     <ProtectedRoute>
                         <Home />
+                    </ProtectedRoute>
+                } />
+                <Route path="/post-detail/:postUid" element={
+                    <ProtectedRoute>
+                        <PostDetailPage />
                     </ProtectedRoute>
                 } />
                 <Route path="*" element={<Navigate to="/login" replace />} />
