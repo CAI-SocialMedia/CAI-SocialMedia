@@ -21,23 +21,6 @@ public class PostService {
 
     private final PostRepository postRepository;
 
-    public void createPostByUserId(PostCreateRequestDTO postCreateRequestDTO,String userUid) {
-        PostDocument post = new PostDocument();
-
-        post.setUserUid(userUid);
-        post.setPostUid(UUID.randomUUID().toString());
-        post.setImageUrl(postCreateRequestDTO.getImageUrl());
-        post.setPrompt(postCreateRequestDTO.getPrompt());
-        post.setCaption(postCreateRequestDTO.getCaption());
-        post.setIsPublic(true);
-        post.setIsDeleted(false);
-        post.setLikeCount(0);
-        post.setCommentCount(0);
-        post.setCreatedAt(DateUtil.formatTimestamp(Timestamp.now()));
-
-        postRepository.save(post);
-    }
-
     public void deleteOnePostByUId(String userUid, String postUid) {
         try {
             //1. silinecek post var mı?
@@ -56,7 +39,7 @@ public class PostService {
         }
     }
 
-    public void togglePostDeleted(String userUid, String postUid) {
+    public void togglePostArchived(String userUid, String postUid) {
         try {
             String ownerUid = postRepository.findUserByPostUid(postUid);
             if (!ownerUid.equals(userUid)) {
@@ -64,9 +47,8 @@ public class PostService {
             }
 
             PostDocument post = postRepository.getPostByUid(postUid);
-            //IsDeleted null değilse ve IsDeleted = true ise -> true
-            boolean current = post.getIsDeleted() != null && post.getIsDeleted();
-            postRepository.toggleIsDeleted(postUid, !current);
+            boolean current = post.getIsArchived() != null && post.getIsArchived();
+            postRepository.toggleIsArchived(postUid, !current);
         } catch (InterruptedException | ExecutionException e) {
             throw new ApiException("Gönderi güncellenirken hata oluştu: " + e.getMessage());
         }
@@ -96,4 +78,15 @@ public class PostService {
         }
     }
 
+    public void updateCaption(String userUid, String postUid, String newCaption) {
+        try {
+            String ownerUid = postRepository.findUserByPostUid(postUid);
+            if (!ownerUid.equals(userUid)) {
+                throw new ApiException("Sadece kendi gönderinizi güncelleyebilirsiniz.");
+            }
+            postRepository.updateCaption(postUid, newCaption);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new ApiException("Gönderi bilgileri getirilirken hata oluştu: " + e);
+        }
+    }
 }
