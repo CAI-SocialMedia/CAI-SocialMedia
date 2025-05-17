@@ -21,6 +21,7 @@ public class PostDocument {
     private Integer commentCount;
     private Boolean isPublic;
     private Boolean isDeleted;
+    private Boolean isArchived;
     private String createdAt;
     private String updatedAt;
 }
