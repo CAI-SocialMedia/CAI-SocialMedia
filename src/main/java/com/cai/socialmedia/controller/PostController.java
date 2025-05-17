@@ -1,5 +1,6 @@
 package com.cai.socialmedia.controller;
 
+import com.cai.socialmedia.dto.CaptionUpdateRequestDTO;
 import com.cai.socialmedia.dto.PostCreateRequestDTO;
 import com.cai.socialmedia.dto.PostResponseDTO;
 import com.cai.socialmedia.service.PostService;
@@ -20,13 +21,6 @@ public class PostController {
 
     private final PostService postService;
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<Void>> createPostByUid(@RequestBody PostCreateRequestDTO postCreateRequestDTO) {
-        String userUid = SecurityUtil.getAuthenticatedUidOrThrow();
-        postService.createPostByUserId(postCreateRequestDTO, userUid);
-        return ResponseEntity.ok(ApiResponse.success(null));
-    }
-
     @PostMapping("delete/{postUid}")
     public ResponseEntity<ApiResponse<Void>> deleteOnePostByUid(HttpServletRequest request, @PathVariable String postUid) {
         String userUid = SecurityUtil.getAuthenticatedUidOrThrow();
@@ -44,7 +38,7 @@ public class PostController {
     @PostMapping("/toggle-post")
     public ResponseEntity<ApiResponse<Void>> togglePost(@RequestParam String postUid) {
         String userUid = SecurityUtil.getAuthenticatedUidOrThrow();
-        postService.togglePostDeleted(userUid, postUid);
+        postService.togglePostArchived(userUid, postUid);
         return ResponseEntity.ok(ApiResponse.success("Gönderi durumu güncellendi", null));
     }
 
@@ -53,6 +47,17 @@ public class PostController {
         PostResponseDTO post = postService.getPostByPostUid(postUid);
         return ResponseEntity.ok(ApiResponse.success("Gönderi bilgileri getirildi", post));
     }
+
+    @PutMapping("/update-caption")
+    public ResponseEntity<ApiResponse<Void>> updateCaption(
+            @RequestParam String postUid,
+            @RequestBody CaptionUpdateRequestDTO request
+    ) {
+        String userUid = SecurityUtil.getAuthenticatedUidOrThrow();
+        postService.updateCaption(userUid, postUid, request.getCaption());
+        return ResponseEntity.ok(ApiResponse.success("Caption güncellendi", null));
+    }
+
 
     //geliştirimi sonra yapılacak
     /*@GetMapping("/feed")
