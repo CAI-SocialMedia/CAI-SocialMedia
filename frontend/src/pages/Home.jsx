@@ -18,14 +18,6 @@ export function Home() {
                         <p className="text-lg text-slate-600 dark:text-slate-300 mb-6">
                             Describe your vision and watch as our AI transforms your words into stunning images. From fantastical landscapes to futuristic scenes, anything is possible.
                         </p>
-
-                        <Button
-                            variant="primary"
-                            size="lg"
-                            className="hidden sm:flex items-center gap-2 shadow-md"
-                        >
-                            Şimdi Oluşturun
-                        </Button>
                     </div>
                 </div>
             </section>

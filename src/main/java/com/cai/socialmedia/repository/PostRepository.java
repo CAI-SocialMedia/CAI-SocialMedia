@@ -95,10 +95,10 @@ public class PostRepository {
     }
 
 
-    public void toggleIsDeleted(String postUid, boolean newValue) {
+    public void toggleIsArchived(String postUid, boolean newValue) {
         DocumentReference docRef = db.collection(COLLECTION_NAME).document(postUid);
         Map<String, Object> updates = new HashMap<>();
-        updates.put("isDeleted", newValue);
+        updates.put("isArchived", newValue);
         docRef.update(updates);
     }
 
@@ -161,10 +161,17 @@ public class PostRepository {
                 .caption(postRequest.getCaption())
                 .likeCount(postRequest.getLikeCount())
                 .commentCount(postRequest.getCommentCount())
-                .isLikedByMe(isLikedByMe) // burada dinamik olarak belirledik
+                .isLikedByMe(isLikedByMe)
                 .isPublic(postRequest.getIsPublic())
                 .createdAt(postRequest.getCreatedAt())
                 .build();
 
+    }
+
+    public void updateCaption(String postUid, String caption) {
+        DocumentReference docRef = db.collection(COLLECTION_NAME).document(postUid);
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("caption", caption);
+        docRef.update(updates);
     }
 }

@@ -82,7 +82,7 @@ export const Header = ({ user }) => {
                     <GlowButton
                         variant="primary"
                         size="sm"
-                        onClick={() => navigate('/create-image')}
+                        onClick={() => navigate('/generate-image')}
                         className="hidden sm:flex items-center gap-2"
                     >
                         <ImagePlus size={16} />

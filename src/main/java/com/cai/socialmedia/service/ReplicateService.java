@@ -1,5 +1,6 @@
 package com.cai.socialmedia.service;
 
+import com.cai.socialmedia.dto.GenerateImageRequestDTO;
 import com.cai.socialmedia.exception.ApiException;
 import com.cai.socialmedia.model.PostDocument;
 import com.cai.socialmedia.repository.PostRepository;
@@ -50,26 +51,24 @@ public class ReplicateService {
         this.apiKey = apiKey;
     }
 
-    public PostDocument generateImage(String prompt, String userUid) {
+    public PostDocument generateImage(GenerateImageRequestDTO request, String userUid) {
         try {
-            log.info("Görsel oluşturma isteği alındı. Prompt: {}, UserUid: {}", prompt, userUid);
+            log.info("Görsel oluşturma isteği alındı. Request: {}, UserUid: {}", request, userUid);
 
             userService.useCredits(userUid, IMAGE_GENERATION_COST);
-            String predictionId = createPrediction(prompt);
+            String predictionId = createPrediction(request.getPrompt());
             String imageUrl = waitForResult(predictionId);
             byte[] imageBytes = downloadImageBytes(imageUrl);
             String firebaseImageUrl = uploadToFirebaseStorage(imageBytes, userUid);
 
-
-
-
             PostDocument post = new PostDocument();
             post.setPostUid(UUID.randomUUID().toString());
             post.setUserUid(userUid);
-            post.setPrompt(prompt);
+            post.setPrompt(request.getPrompt());
             post.setImageUrl(firebaseImageUrl);
             post.setIsPublic(true);
             post.setIsDeleted(false);
+            post.setIsArchived(true);
             post.setLikeCount(0);
             post.setCommentCount(0);
             post.setCreatedAt(DateUtil.formatTimestamp(Timestamp.now()));
@@ -91,8 +90,8 @@ public class ReplicateService {
         Map<String, Object> input = new HashMap<>();
         input.put("prompt", prompt);
         input.put("negative_prompt", "low quality, bad anatomy, blurry, distorted");
-        input.put("width", 1024);
-        input.put("height", 1024);
+        input.put("width", 512);
+        input.put("height", 512);
         input.put("num_outputs", 1);
         input.put("scheduler", "K_EULER");
         input.put("num_inference_steps", 4);  // Modelin önerdiği gibi
