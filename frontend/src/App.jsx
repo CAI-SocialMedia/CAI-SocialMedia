@@ -14,8 +14,9 @@ import LoadingSpinner from "./components/common/LoadingSpinner";
 import Footer from "./components/common/Footer";
 import { CursorGlow } from "./components/effects/CursorGlow";
 import PostDetailPage from "./pages/PostDetailPage";
+import GenerateImagePage from "./pages/GenerateImagePage.jsx";
+import { Toaster } from "sonner";
 
-// Protected Route bileşeni
 const ProtectedRoute = ({ children }) => {
     const { user, loading } = useAuth();
 
@@ -30,7 +31,6 @@ const ProtectedRoute = ({ children }) => {
     return children;
 };
 
-// Public Route bileşeni (sadece giriş yapmamış kullanıcılar için)
 const PublicRoute = ({ children }) => {
     const { user, loading } = useAuth();
 
@@ -45,7 +45,6 @@ const PublicRoute = ({ children }) => {
     return children;
 };
 
-// Ana sayfa düzeni
 const MainLayout = ({ children }) => {
     const { user } = useAuth();
     const { isDark } = useTheme();
@@ -53,15 +52,16 @@ const MainLayout = ({ children }) => {
     const hideHeaderPaths = ['/login', '/register', '/google-register'];
 
     return (
-        <div className="min-h-screen bg-white text-slate-800 dark:bg-slate-950 dark:text-slate-200">
+        <div className="min-h-screen flex flex-col bg-white text-slate-800 dark:bg-slate-950 dark:text-slate-200">
             <CursorGlow/>
-            {user && !hideHeaderPaths.includes(location) && <Header user={user} />}
+            <Toaster position="top-center" richColors/>
+            {user && !hideHeaderPaths.includes(location) && <Header user={user}/>}
 
-            <main className="container mx-auto px-4 py-8">
-                <div className="max-w-6xl mx-auto">{children}</div>
+            <main className="container mx-auto px-4 py-8 flex-grow">
+                <div className="max-w-4xl mx-auto">{children}</div>
             </main>
 
-            {user && !hideHeaderPaths.includes(location) && <Footer />}
+            {user && !hideHeaderPaths.includes(location) && <Footer/>}
         </div>
     );
 };
@@ -100,6 +100,11 @@ function AppContent() {
                         <Home />
                     </ProtectedRoute>
                 } />
+                <Route path="/generate-image" element={
+                    <ProtectedRoute>
+                        <GenerateImagePage />
+                    </ProtectedRoute>
+                } />
                 <Route path="/post-detail/:postUid" element={
                     <ProtectedRoute>
                         <PostDetailPage />
@@ -116,7 +121,7 @@ function App() {
         <Router>
             <AuthProvider>
                 <ThemeProvider>
-                <AppContent />
+                    <AppContent />
                 </ThemeProvider>
             </AuthProvider>
         </Router>
