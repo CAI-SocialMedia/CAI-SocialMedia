@@ -1,7 +1,6 @@
 package com.cai.socialmedia.controller;
 
 import com.cai.socialmedia.dto.CaptionUpdateRequestDTO;
-import com.cai.socialmedia.dto.PostCreateRequestDTO;
 import com.cai.socialmedia.dto.PostResponseDTO;
 import com.cai.socialmedia.service.PostService;
 import com.cai.socialmedia.util.ApiResponse;
@@ -9,7 +8,6 @@ import com.cai.socialmedia.util.SecurityUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,7 +20,7 @@ public class PostController {
     private final PostService postService;
 
     @PostMapping("delete/{postUid}")
-    public ResponseEntity<ApiResponse<Void>> deleteOnePostByUid(HttpServletRequest request, @PathVariable String postUid) {
+    public ResponseEntity<ApiResponse<Void>> deleteOnePostByUid(@PathVariable String postUid) {
         String userUid = SecurityUtil.getAuthenticatedUidOrThrow();
         postService.deleteOnePostByUId(userUid, postUid);
         return ResponseEntity.ok(ApiResponse.success(null));
@@ -58,12 +56,10 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.success("Caption güncellendi", null));
     }
 
-
-    //geliştirimi sonra yapılacak
-    /*@GetMapping("/feed")
-    public ResponseEntity<ApiResponse<List<PostResponseDTO>>> getFeedPosts(HttpServletRequest request) {
-        String userUid = (String) request.getAttribute("firebaseUid");
-        List<PostResponseDTO> posts = postService.getAllPublicPosts(userUid);
+    @GetMapping("/feed")
+    public ResponseEntity<ApiResponse<List<PostResponseDTO>>> getFeedPosts() {
+        String userUid = SecurityUtil.getAuthenticatedUidOrThrow();
+        List<PostResponseDTO> posts = postService.getPostsFromFollowings(userUid);
         return ResponseEntity.ok(ApiResponse.success(posts));
-    }*/
+    }
 }

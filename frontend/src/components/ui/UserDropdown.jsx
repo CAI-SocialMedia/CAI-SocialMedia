@@ -1,11 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, User, Rocket, Moon, Sun } from 'lucide-react';
+import {LogOut, User, Rocket, Moon, Sun, Album, HeartPlus} from 'lucide-react';
 import { auth } from '../../auth/firebase';
 import { toast } from 'sonner';
 import { useTheme } from '../../contexts/ThemeContext';
 
-export const UserDropdown = ({ onClose, displayName }) => {
+export const UserDropdown = ({ onClose }) => {
     const navigate = useNavigate();
     const { isDark, setIsDark } = useTheme();
 
@@ -21,30 +21,58 @@ export const UserDropdown = ({ onClose, displayName }) => {
         onClose();
     };
 
+    const handleArchivedPosts = () => {
+        toast.info('Arşivlenmiş postlar getirilmiyorrrr');
+        onClose();
+    };
+
+    const handleFavoritesPosts = () => {
+        toast.info('Favoriler getirilmiyorrrr');
+        onClose();
+    };
+
+
     return (
-        <div className="absolute right-0 top-full mt-2 w-60 rounded-xl border border-slate-300 dark:border-slate-700 shadow-2xl z-50 backdrop-blur-md bg-white/90 dark:bg-slate-800/70 transition-all duration-300">
+        <div
+            className="absolute right-0 top-full mt-2 w-60 rounded-xl border border-slate-300 dark:border-slate-700 shadow-2xl z-50 backdrop-blur-md bg-white/90 dark:bg-slate-800/70 transition-all duration-300">
             <button
                 onClick={() => {
-                    navigate('/me');
+                    navigate('/profile');
                     onClose();
                 }}
                 className="w-full px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-700/60 flex items-center gap-2 text-slate-700 dark:text-slate-300 transition-all"
             >
-                <User className="w-4 h-4" />
+                <User className="w-4 h-4"/>
                 <span>Profilim</span>
             </button>
             <button
                 onClick={handleUpgrade}
                 className="w-full px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-700/60 flex items-center gap-2 text-slate-700 dark:text-slate-300 transition-all"
             >
-                <Rocket className="w-4 h-4" />
+                <Rocket className="w-4 h-4"/>
                 <span>Abonelik</span>
+            </button>
+
+            <button
+                onClick={handleArchivedPosts}
+                className="w-full px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-700/60 flex items-center gap-2 text-slate-700 dark:text-slate-300 transition-all"
+            >
+                <Album className="w-4 h-4"/>
+                <span>Arşiv</span>
+            </button>
+
+            <button
+                onClick={handleFavoritesPosts}
+                className="w-full px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-700/60 flex items-center gap-2 text-slate-700 dark:text-slate-300 transition-all"
+            >
+                <HeartPlus className="w-4 h-4"/>
+                <span>Favoriler</span>
             </button>
 
             {/* Tema Switch */}
             <div className="flex items-center justify-between w-full px-4 py-2 text-slate-700 dark:text-slate-300">
                 <div className="flex items-center gap-2">
-                    {isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                    {isDark ? <Moon className="w-4 h-4"/> : <Sun className="w-4 h-4"/>}
                     <span className="text-sm">{isDark ? 'Koyu Tema' : 'Açık Tema'}</span>
                 </div>
                 <button
@@ -61,12 +89,12 @@ export const UserDropdown = ({ onClose, displayName }) => {
                 </button>
             </div>
 
-            <div className="border-t border-slate-300 dark:border-slate-700 my-1" />
+            <div className="border-t border-slate-300 dark:border-slate-700 my-1"/>
             <button
                 onClick={handleLogout}
                 className="w-full px-4 py-2 hover:bg-red-100 dark:hover:bg-red-500/20 flex items-center gap-2 text-red-500 dark:text-red-400 transition-all"
             >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-4 h-4"/>
                 <span>Çıkış Yap</span>
             </button>
         </div>

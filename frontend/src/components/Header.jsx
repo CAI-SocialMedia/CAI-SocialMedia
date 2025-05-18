@@ -8,7 +8,6 @@ import { Logo } from './Logo';
 import { Button } from './ui/Button';
 import { GlowButton } from './ui/GlowButton';
 import { MobileMenu } from './MobileMenu';
-import { auth } from '../auth/firebase';
 import { toast } from 'react-hot-toast';
 import { UserDropdown } from './ui/UserDropdown.jsx';
 
@@ -21,11 +20,6 @@ export const Header = ({ user }) => {
 
     const handleSearch = (e) => {
         e.preventDefault();
-    };
-
-    const handleLogout = () => {
-        auth.signOut();
-        navigate('/login');
     };
 
     return (

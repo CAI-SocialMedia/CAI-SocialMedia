@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PublicUserDTO {
     private String displayName;
+    private String username;
     private String profilePhotoUid;
 }
 

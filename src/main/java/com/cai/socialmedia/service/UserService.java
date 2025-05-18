@@ -13,15 +13,11 @@ import com.google.cloud.Timestamp;
 import com.google.firebase.auth.FirebaseToken;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -30,6 +26,26 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final String TODAY = DateUtil.formatYearMonthDay();
+
+    // Kullanıcılara günlik kredi verme islemleri
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void resetAllUsersDailyQuota() {
+        log.info("Günlük kredi yenileme işlemi başlatıldı: {}", LocalDateTime.now());
+        try {
+            List<UserDocument> users = userRepository.getAllActiveUsers();
+            for (UserDocument user : users) {
+                if (!TODAY.equals(user.getLastQuotaResetDate())) {
+                    user.setCredits(user.getDailyQuota());
+                    user.setLastQuotaResetDate(TODAY);
+                    user.setUpdatedAt(DateUtil.formatTimestamp(Timestamp.now()));
+                    userRepository.save(user);
+                }
+            }
+            log.info("Günlük kredi yenileme işlemi tamamlandı");
+        } catch (Exception e) {
+            log.error("Kredi yenileme işlemi sırasında hata oluştu: {}", e.getMessage());
+        }
+    }
 
     // Kullanıcı Bulma İşlemleri
     public UserDocument getUserByUid(String uid) {
@@ -182,26 +198,6 @@ public class UserService {
             user.getCredits(),
             user.getSubscriptionType().name()
         );
-    }
-
-    // Zamanlanmış Görevler
-    @Scheduled(cron = "0 0 0 * * ?")
-    public void resetAllUsersDailyQuota() {
-        log.info("Günlük kredi yenileme işlemi başlatıldı: {}", LocalDateTime.now());
-        try {
-            List<UserDocument> users = userRepository.getAllActiveUsers();
-            for (UserDocument user : users) {
-                if (!TODAY.equals(user.getLastQuotaResetDate())) {
-                    user.setCredits(user.getDailyQuota());
-                    user.setLastQuotaResetDate(TODAY);
-                    user.setUpdatedAt(DateUtil.formatTimestamp(Timestamp.now()));
-        userRepository.save(user);
-                }
-            }
-            log.info("Günlük kredi yenileme işlemi tamamlandı");
-        } catch (Exception e) {
-            log.error("Kredi yenileme işlemi sırasında hata oluştu: {}", e.getMessage());
-        }
     }
 
     public PublicUserDTO getPublicUserByUid(String userUid) {

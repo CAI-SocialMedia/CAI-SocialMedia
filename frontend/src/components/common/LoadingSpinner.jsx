@@ -1,11 +1,12 @@
 import React from 'react';
 
-const LoadingSpinner = () => {
+const LoadingSpinner = ({ message = "Yükleniyor..." }) => {
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-950 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+        <div className="flex flex-col items-center justify-center py-16">
+            <div className="animate-spin rounded-full h-10 w-10 border-4 border-purple-500 border-t-transparent mb-4" />
+            <p className="text-sm text-slate-400">{message}</p>
         </div>
     );
 };
 
-export default LoadingSpinner; 
+export default LoadingSpinner;

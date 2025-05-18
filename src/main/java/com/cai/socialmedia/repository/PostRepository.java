@@ -10,9 +10,10 @@ import com.cai.socialmedia.model.PostDocument;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
@@ -24,9 +25,11 @@ public class PostRepository {
     private final Firestore db = FirestoreClient.getFirestore();
     private static final Logger log = LoggerFactory.getLogger(PostRepository.class);
     private final LikeRepository likeRepository;
+    private final FollowRepository followRepository;
 
-    public PostRepository(LikeRepository likeRepository) {
+    public PostRepository(LikeRepository likeRepository, FollowRepository followRepository) {
         this.likeRepository = likeRepository;
+        this.followRepository = followRepository;
     }
 
     public void save(PostDocument postDocument) {
@@ -41,14 +44,6 @@ public class PostRepository {
         updates.put("isDeleted", true);
 
         docRef.update(updates);
-    }
-
-    public DocumentSnapshot findPostByUid(String postUid) throws ExecutionException, InterruptedException {
-        DocumentReference docRef = db.collection(COLLECTION_NAME).document(postUid);
-        DocumentSnapshot snapshot = docRef.get().get();
-
-        // Snapshot zaten DocumentSnapshot nesnesidir
-        return snapshot.exists() ? snapshot : null;
     }
 
     public String findUserByPostUid(String postUid) throws ExecutionException, InterruptedException {
@@ -71,13 +66,21 @@ public class PostRepository {
     public List<PostResponseDTO> getAllPostByUserUid(String userUid) throws ExecutionException, InterruptedException {
         List<PostResponseDTO> posts = new ArrayList<>();
         CollectionReference postsRef = db.collection(COLLECTION_NAME);
-        ApiFuture<QuerySnapshot> query = postsRef.whereEqualTo("userUid", userUid).get();
+        ApiFuture<QuerySnapshot> query = postsRef
+                .whereEqualTo("userUid", userUid)
+                .whereEqualTo("isDeleted", false)
+                .whereEqualTo("isArchived", false)
+                .get();
         QuerySnapshot querySnapshot = query.get();
 
         for (DocumentSnapshot document : querySnapshot.getDocuments()) {
-            PostResponseDTO post = document.toObject(PostResponseDTO.class);
-            if (post != null) {
-                posts.add(post);
+            try {
+                PostResponseDTO post = document.toObject(PostResponseDTO.class);
+                if (post != null) {
+                    posts.add(post);
+                }
+            } catch (Exception e) {
+                log.warn("Post parse edilemedi. UID: {}", document.getId(), e);
             }
         }
         return posts;
@@ -146,12 +149,6 @@ public class PostRepository {
             log.info("Post silinmiş durumda. UID: {}", postUid);
             return null;
         }
-        String currentUserUid = SecurityUtil.getAuthenticatedUidOrThrow();
-
-        boolean isLikedByMe = likeRepository
-                .findByUserUidAndPostUid(currentUserUid, postUid)
-                .filter(like -> Boolean.FALSE.equals(like.getIsDeleted()))
-                .isPresent();
 
         return PostResponseDTO.builder()
                 .postUid(postRequest.getPostUid())
@@ -161,7 +158,7 @@ public class PostRepository {
                 .caption(postRequest.getCaption())
                 .likeCount(postRequest.getLikeCount())
                 .commentCount(postRequest.getCommentCount())
-                .isLikedByMe(isLikedByMe)
+                .isLikedByMe(isLikedByMe(postUid))
                 .isPublic(postRequest.getIsPublic())
                 .createdAt(postRequest.getCreatedAt())
                 .build();
@@ -173,5 +170,71 @@ public class PostRepository {
         Map<String, Object> updates = new HashMap<>();
         updates.put("caption", caption);
         docRef.update(updates);
+    }
+
+    public List<PostResponseDTO> getPostsFromFollowings(String userUid) throws ExecutionException, InterruptedException {
+        List<PostResponseDTO> posts = new ArrayList<>();
+        CollectionReference postsRef = db.collection(COLLECTION_NAME);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        List<String> followingUids = followRepository.getFollowingIds(userUid);
+        if (followingUids.isEmpty()) return posts;
+
+        List<List<String>> partitions = partitionList(followingUids, 10);
+
+        for (List<String> uidGroup : partitions) {
+            ApiFuture<QuerySnapshot> query = postsRef
+                    .whereIn("userUid", uidGroup)
+                    .whereEqualTo("isDeleted", false)
+                    .whereEqualTo("isArchived", false)
+                    .get(); // Firestore'da orderBy + whereIn uyumsuz olabilir, Java'da sıralarız
+
+            QuerySnapshot querySnapshot = query.get();
+            for (QueryDocumentSnapshot doc : querySnapshot.getDocuments()) {
+                PostDocument post = doc.toObject(PostDocument.class);
+
+                PostResponseDTO dto = PostResponseDTO.builder()
+                        .postUid(post.getPostUid())
+                        .userUid(post.getUserUid())
+                        .imageUrl(post.getImageUrl())
+                        .prompt(post.getPrompt())
+                        .caption(post.getCaption())
+                        .likeCount(post.getLikeCount())
+                        .commentCount(post.getCommentCount())
+                        .isLikedByMe(isLikedByMe(post.getPostUid()))
+                        .isPublic(post.getIsPublic())
+                        .createdAt(post.getCreatedAt())
+                        .isDeleted(post.getIsDeleted())
+                        .build();
+
+                posts.add(dto);
+            }
+        }
+
+            posts.sort((a, b) -> {
+            LocalDateTime dateA = LocalDateTime.parse(a.getCreatedAt(), formatter);
+            LocalDateTime dateB = LocalDateTime.parse(b.getCreatedAt(), formatter);
+            return dateB.compareTo(dateA);
+        });
+
+        return posts;
+    }
+
+
+    private List<List<String>> partitionList(List<String> list, int size) {
+        List<List<String>> partitions = new ArrayList<>();
+        for (int i = 0; i < list.size(); i += size) {
+            partitions.add(list.subList(i, Math.min(i + size, list.size())));
+        }
+        return partitions;
+    }
+
+    private boolean isLikedByMe(String postUid){
+        String currentUserUid = SecurityUtil.getAuthenticatedUidOrThrow();
+
+        return likeRepository
+                .findByUserUidAndPostUid(currentUserUid, postUid)
+                .filter(like -> Boolean.FALSE.equals(like.getIsDeleted()))
+                .isPresent();
     }
 }

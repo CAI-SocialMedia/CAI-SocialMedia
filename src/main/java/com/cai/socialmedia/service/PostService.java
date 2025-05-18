@@ -1,17 +1,13 @@
 package com.cai.socialmedia.service;
 
-import com.cai.socialmedia.dto.PostCreateRequestDTO;
 import com.cai.socialmedia.dto.PostResponseDTO;
 import com.cai.socialmedia.exception.ApiException;
 import com.cai.socialmedia.model.PostDocument;
 import com.cai.socialmedia.repository.PostRepository;
-import com.cai.socialmedia.util.DateUtil;
-import com.google.cloud.Timestamp;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 
@@ -56,7 +52,7 @@ public class PostService {
 
     public List<PostResponseDTO> getAllPostByUserUid(String targetUserUid) {
         try {
-            //TODO: burası sonra geliştirilecek
+
             return postRepository.getAllPostByUserUid(targetUserUid);
         } catch (InterruptedException | ExecutionException e) {
             throw new ApiException("Gönderileri getirme aşamasında hata oluştu");
@@ -87,6 +83,14 @@ public class PostService {
             postRepository.updateCaption(postUid, newCaption);
         } catch (InterruptedException | ExecutionException e) {
             throw new ApiException("Gönderi bilgileri getirilirken hata oluştu: " + e);
+        }
+    }
+
+    public List<PostResponseDTO> getPostsFromFollowings(String userUid) {
+        try {
+            return postRepository.getPostsFromFollowings(userUid);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new ApiException("Gönderileri getirme aşamasında hata oluştu");
         }
     }
 }

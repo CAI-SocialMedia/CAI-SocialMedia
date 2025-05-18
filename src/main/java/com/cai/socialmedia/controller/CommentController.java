@@ -7,10 +7,8 @@ import com.cai.socialmedia.exception.ApiException;
 import com.cai.socialmedia.service.CommentService;
 import com.cai.socialmedia.util.ApiResponse;
 import com.cai.socialmedia.util.SecurityUtil;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

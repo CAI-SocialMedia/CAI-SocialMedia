@@ -20,7 +20,7 @@ public class FirebaseConfig {
         try {
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.getApplicationDefault())
-                    .setStorageBucket(storageBucket) // ✅ BU SATIR ZORUNLU
+                    .setStorageBucket(storageBucket)
                     .build();
 
             if (FirebaseApp.getApps().isEmpty()) {

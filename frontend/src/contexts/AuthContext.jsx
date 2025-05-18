@@ -41,15 +41,19 @@ export function AuthProvider({ children }) {
         return unsubscribe;
     }, [location.pathname]);
 
-    const value = {
-        user,
-        setUser,
-        loading
-    };
+    const value = { user, setUser, loading };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-950 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent" />
+            </div>
+        );
+    }
 
     return (
         <AuthContext.Provider value={value}>
-            {!loading && children}
+            {children}
         </AuthContext.Provider>
     );
-} 
+}

@@ -7,7 +7,6 @@ import {
     GoogleAuthProvider
 } from "firebase/auth";
 import { auth } from "../auth/firebase.js";
-import { generateSafeUsername } from "../utils/stringUtils.js";
 import api from "../api/axios.js";
 
 class AuthService {
@@ -55,7 +54,6 @@ class AuthService {
             localStorage.setItem('authToken', token);
             console.log(token)
 
-            // Backend'den kullanıcı bilgilerini al
             const response = await api.get('/user/me', {
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -85,23 +83,20 @@ class AuthService {
             console.log(token)
 
             try {
-                // Kullanıcı backend'de var mı kontrolü
                 const response = await api.get('/user/me', {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }
                 });
 
-                // Kayıtlıysa bilgileri döndür
                 return {
                     user: response.data,
                     token
                 };
             } catch (error) {
                 if (error.response?.status === 404 || error.response?.status === 400) {
-                    // ❗ Yeni kullanıcı → yönlendirme yapılmalı
                     return {
-                        user: null, // veya auth.currentUser
+                        user: null,
                         token,
                         needsRegistration: true
                     };
@@ -142,7 +137,6 @@ class AuthService {
                 }
             });
 
-
             return { 
                 user: response.data,
                 token
@@ -151,7 +145,6 @@ class AuthService {
             console.error('Google registration completion error:', error);
             console.error('Error response:', error.response?.data);
             
-            // Backend'den gelen hata mesajını al
             let errorMessage = 'Kayıt işlemi sırasında bir hata oluştu';
             
             if (error.response?.data?.Message) {

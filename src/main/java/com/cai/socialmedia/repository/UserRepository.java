@@ -70,7 +70,7 @@ public class UserRepository {
             db.collection(COLLECTION_NAME)
                     .document(userDocument.getUid())
                     .set(userDocument, SetOptions.merge())
-                    .get(); // İşlemin tamamlanmasını bekle
+                    .get();
             log.info("Kullanıcı başarıyla kaydedildi - UID: {}", userDocument.getUid());
         } catch (Exception e) {
             log.error("Kullanıcı kaydedilirken hata oluştu - UID: {}, Hata: {}", userDocument.getUid(), e.getMessage());
@@ -99,7 +99,7 @@ public class UserRepository {
                 user.setDailyQuota(newPlan.getDailyQuota());
                 user.setIsPremium(true);
             } else {
-                user.setSubscriptionEndDate(null); // FREE plan için süresiz
+                user.setSubscriptionEndDate(null);
                 user.setSubscriptionStartDate(null);
                 user.setIsPremium(false);
             }
@@ -187,6 +187,7 @@ public class UserRepository {
             PublicUserDTO publicUser = PublicUserDTO.builder()
                     .displayName(user.getDisplayName())
                     .profilePhotoUid(user.getProfilePhotoUid())
+                    .username(user.getUsername())
                     .build();
 
             return Optional.of(publicUser);

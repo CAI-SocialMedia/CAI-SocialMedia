@@ -14,7 +14,6 @@ import com.google.firebase.auth.FirebaseToken;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -58,7 +57,7 @@ public class UserController {
     }
 
     @PutMapping("/update")
-    public ResponseEntity<UserDTO> updateUser(HttpServletRequest request, @RequestBody Map<String, String> body) {
+    public ResponseEntity<UserDTO> updateUser(@RequestBody Map<String, String> body) {
         String uid = SecurityUtil.getAuthenticatedUidOrThrow();
         String username = body.get("username");
         String displayName = body.get("displayName");

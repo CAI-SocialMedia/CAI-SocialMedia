@@ -7,7 +7,6 @@ import { Header } from "./components/Header";
 import { Explore } from './pages/Explore';
 import { Home } from "./pages/Home";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import { useTheme } from './contexts/ThemeContext.jsx';
 import { ThemeProvider } from "./contexts/ThemeContext";
 import GoogleRegisterPage from "./pages/GoogleRegisterPage";
 import LoadingSpinner from "./components/common/LoadingSpinner";
@@ -47,7 +46,6 @@ const PublicRoute = ({ children }) => {
 
 const MainLayout = ({ children }) => {
     const { user } = useAuth();
-    const { isDark } = useTheme();
     const location = window.location.pathname;
     const hideHeaderPaths = ['/login', '/register', '/google-register'];
 
@@ -67,6 +65,12 @@ const MainLayout = ({ children }) => {
 };
 
 function AppContent() {
+    const { loading } = useAuth();
+
+    if (loading) {
+        return <LoadingSpinner />;
+    }
+
     return (
         <MainLayout>
             <Routes>
@@ -85,7 +89,13 @@ function AppContent() {
                         <GoogleRegisterPage />
                     </PublicRoute>
                 } />
-                <Route path="/me" element={
+                <Route path="/profile" element={
+                    <ProtectedRoute>
+                        <UserInfo />
+                    </ProtectedRoute>
+                } />
+
+                <Route path="/profile/:userUid" element={
                     <ProtectedRoute>
                         <UserInfo />
                     </ProtectedRoute>

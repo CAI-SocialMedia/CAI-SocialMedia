@@ -1,11 +1,9 @@
 package com.cai.socialmedia.dto;
 
-import com.google.cloud.Timestamp;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 
 @Data
 @Builder
@@ -23,4 +21,6 @@ public class PostResponseDTO {
     private Boolean isPublic;
     private Boolean isDeleted;
     private String createdAt;
+    private Boolean isArchived;
+    private String updatedAt;
 }
