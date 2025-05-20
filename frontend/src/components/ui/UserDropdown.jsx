@@ -22,7 +22,7 @@ export const UserDropdown = ({ onClose }) => {
     };
 
     const handleArchivedPosts = () => {
-        toast.info('Arşivlenmiş postlar getirilmiyorrrr');
+        navigate('/archived');
         onClose();
     };
 
