@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Heart, MessageCircle, Share2, Trash2, Edit, X, HeartPlus } from "lucide-react";
+import {Heart, MessageCircle, Share2, Trash2, Edit, X, HeartPlus, Archive} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import api from "../api/axios.js";
@@ -20,12 +20,12 @@ import { useAuth } from "../contexts/AuthContext.jsx";
  * @param {function} [props.onRefresh]
  */
 export default function FullPostCard({
-                                         post,
-                                         postOwner,
-                                         currentUser,
-                                         comments = [],
-                                         showComments = true,
-                                         onRefresh,
+     post,
+     postOwner,
+     currentUser,
+     comments = [],
+     showComments = true,
+     onRefresh
                                      }) {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -167,6 +167,32 @@ export default function FullPostCard({
             console.error("Toggle favorite failed:", err);
         }
     };
+
+    const handleToggleArchive = async () => {
+        try {
+            const response = await api.post(`/post/toggle-post?postUid=${post.postUid}`);
+            const isArchivedNow = response.data?.Data?.isArchived;
+
+            toast.success(
+                isArchivedNow
+                    ? "Gönderiniz arşivlendi!"
+                    : "Gönderiniz arşivden çıkarıldı!"
+            );
+
+            // Duruma göre yönlendirme
+            if (isArchivedNow) {
+                navigate("/archived");
+            } else {
+                navigate(`/profile/${postOwner.userUid}`);
+            }
+
+            onRefresh?.();
+        } catch (err) {
+            console.error("Arşivleme hatası:", err);
+            toast.error("Gönderi arşivlenemedi.");
+        }
+    };
+
 
     /**
      * Gönderinin bağlantısını panoya kopyalar.
@@ -315,17 +341,33 @@ export default function FullPostCard({
                         <span className="font-medium">{post.commentCount}</span>
                     </div>
 
-                    {/* FAVORİ BUTONU - SAĞA YASLANMIŞ */}
-                    <div className="ml-auto">
+                    {/* FAVORİ ve ARŞİV BUTONU  */}
+                    <div className="ml-auto flex items-center gap-2">
                         <button
                             onClick={handleToggleFavorite}
                             className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors"
                             title="Favoriye Ekle/Kaldır"
                             aria-label="Gönderiyi favorilere ekle veya kaldır"
                         >
-                            <HeartPlus size={20} className="text-slate-600 dark:text-slate-300" />
+                            <HeartPlus size={20} className="text-slate-600 dark:text-slate-300"/>
                         </button>
+
+                        {/* Sadece kendi gönderisi için arşivleme butonu gösterilsin */}
+                        {user?.uid === postOwner?.userUid && (
+                            <button
+                                onClick={handleToggleArchive}
+                                className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors"
+                                title={post.isArchived ? "Arşivden çıkar" : "Arşivle"}
+                            >
+                                <Archive
+                                    size={20}
+                                    className="text-slate-600 dark:text-slate-300"
+                                    fill={post.isArchived ? "currentColor" : "none"}
+                                />
+                            </button>
+                        )}
                     </div>
+
                 </div>
 
                 {/* Gönderi Açıklaması ve Prompt */}
