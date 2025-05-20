@@ -4,6 +4,7 @@ import com.cai.socialmedia.dto.PostResponseDTO;
 import com.cai.socialmedia.exception.ApiException;
 import com.cai.socialmedia.model.PostDocument;
 import com.cai.socialmedia.repository.PostRepository;
+import com.cai.socialmedia.util.SecurityUtil;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +36,7 @@ public class PostService {
         }
     }
 
-    public void togglePostArchived(String userUid, String postUid) {
+    public boolean togglePostArchived(String userUid, String postUid) {
         try {
             String ownerUid = postRepository.findUserByPostUid(postUid);
             if (!ownerUid.equals(userUid)) {
@@ -44,7 +45,7 @@ public class PostService {
 
             PostDocument post = postRepository.getPostByUid(postUid);
             boolean current = post.getIsArchived() != null && post.getIsArchived();
-            postRepository.toggleIsArchived(postUid, !current);
+            return postRepository.toggleIsArchived(postUid, !current);
         } catch (InterruptedException | ExecutionException e) {
             throw new ApiException("Gönderi güncellenirken hata oluştu: " + e.getMessage());
         }
@@ -59,20 +60,11 @@ public class PostService {
         }
     }
 
-    public PostResponseDTO getPostByPostUid(String postUid){
-        try {
-            PostResponseDTO post = postRepository.getPostByPostUid(postUid);
-
-            if (post == null) {
-                throw new ApiException("Gönderi bulunamadı");
-            }
-
-            return post;
-
-        } catch (InterruptedException | ExecutionException e) {
-            throw new ApiException("Gönderi bilgileri getirilirken hata oluştu: " + e);
-        }
+    public PostResponseDTO getPostByPostUid(String postUid) {
+        String currentUserUid = SecurityUtil.getAuthenticatedUidOrThrow();
+        return postRepository.getPostByPostUidWithPermission(postUid, currentUserUid);
     }
+
 
     public void updateCaption(String userUid, String postUid, String newCaption) {
         try {
@@ -93,4 +85,13 @@ public class PostService {
             throw new ApiException("Gönderileri getirme aşamasında hata oluştu");
         }
     }
+
+    public List<PostResponseDTO> getArchivedPosts(String userUid) {
+        try {
+            return postRepository.getArchivedPosts(userUid);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new ApiException("Gönderileri getirme aşamasında hata oluştu");
+        }
+    }
+
 }

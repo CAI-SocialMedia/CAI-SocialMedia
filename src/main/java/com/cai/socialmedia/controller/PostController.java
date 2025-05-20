@@ -5,12 +5,12 @@ import com.cai.socialmedia.dto.PostResponseDTO;
 import com.cai.socialmedia.service.PostService;
 import com.cai.socialmedia.util.ApiResponse;
 import com.cai.socialmedia.util.SecurityUtil;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/post")
@@ -34,11 +34,12 @@ public class PostController {
     }
 
     @PostMapping("/toggle-post")
-    public ResponseEntity<ApiResponse<Void>> togglePost(@RequestParam String postUid) {
+    public ResponseEntity<ApiResponse<Map<String, Boolean>>> togglePost(@RequestParam String postUid) {
         String userUid = SecurityUtil.getAuthenticatedUidOrThrow();
-        postService.togglePostArchived(userUid, postUid);
-        return ResponseEntity.ok(ApiResponse.success("Gönderi durumu güncellendi", null));
+        boolean isArchived = postService.togglePostArchived(userUid, postUid);
+        return ResponseEntity.ok(ApiResponse.success("Gönderi durumu güncellendi", Map.of("isArchived", isArchived)));
     }
+
 
     @GetMapping("/info/{postUid}")
     public ResponseEntity<ApiResponse<PostResponseDTO>> getOnePostByUid(@PathVariable String postUid) {
@@ -60,6 +61,13 @@ public class PostController {
     public ResponseEntity<ApiResponse<List<PostResponseDTO>>> getFeedPosts() {
         String userUid = SecurityUtil.getAuthenticatedUidOrThrow();
         List<PostResponseDTO> posts = postService.getPostsFromFollowings(userUid);
+        return ResponseEntity.ok(ApiResponse.success(posts));
+    }
+
+    @GetMapping("/get-archived-posts")
+    public ResponseEntity<ApiResponse<List<PostResponseDTO>>> getArchivedPosts() {
+        String userUid = SecurityUtil.getAuthenticatedUidOrThrow();
+        List<PostResponseDTO> posts = postService.getArchivedPosts(userUid);
         return ResponseEntity.ok(ApiResponse.success(posts));
     }
 }

@@ -98,11 +98,12 @@ public class PostRepository {
     }
 
 
-    public void toggleIsArchived(String postUid, boolean newValue) {
+    public boolean toggleIsArchived(String postUid, boolean newValue) {
         DocumentReference docRef = db.collection(COLLECTION_NAME).document(postUid);
         Map<String, Object> updates = new HashMap<>();
         updates.put("isArchived", newValue);
         docRef.update(updates);
+        return newValue;
     }
 
 
@@ -220,6 +221,23 @@ public class PostRepository {
         return posts;
     }
 
+    public List<PostResponseDTO> getArchivedPosts(String userUid) throws ExecutionException, InterruptedException {
+        List<PostResponseDTO> posts = new ArrayList<>();
+        CollectionReference postsRef = db.collection(COLLECTION_NAME);
+        ApiFuture<QuerySnapshot> query = postsRef
+                .whereEqualTo("userUid", userUid)
+                .whereEqualTo("isArchived", true)
+                .get();
+        QuerySnapshot querySnapshot = query.get();
+        for (DocumentSnapshot document : querySnapshot.getDocuments()) {
+            PostResponseDTO post = document.toObject(PostResponseDTO.class);
+            if (post != null) {
+                posts.add(post);
+            }
+        }
+        return posts;
+    }
+
 
     private List<List<String>> partitionList(List<String> list, int size) {
         List<List<String>> partitions = new ArrayList<>();
@@ -236,5 +254,44 @@ public class PostRepository {
                 .findByUserUidAndPostUid(currentUserUid, postUid)
                 .filter(like -> Boolean.FALSE.equals(like.getIsDeleted()))
                 .isPresent();
+    }
+
+    public PostResponseDTO getPostByPostUidWithPermission(String postUid, String currentUserUid) {
+        try {
+            DocumentReference docRef = db.collection(COLLECTION_NAME).document(postUid);
+            DocumentSnapshot snapshot = docRef.get().get();
+
+            if (!snapshot.exists()) {
+                log.warn("Post bulunamadı. UID: {}", postUid);
+                throw new ApiException("Gönderi bulunamadı");
+            }
+
+            PostDocument post = snapshot.toObject(PostDocument.class);
+
+            if (post == null || Boolean.TRUE.equals(post.getIsDeleted())) {
+                log.info("Post silinmiş veya null durumda. UID: {}", postUid);
+                throw new ApiException("Gönderi silinmiş veya bulunamadı");
+            }
+
+            if (Boolean.TRUE.equals(post.getIsArchived()) && !currentUserUid.equals(post.getUserUid())) {
+                throw new ApiException("Bu gönderiye erişim izniniz yok");
+            }
+
+            return PostResponseDTO.builder()
+                    .postUid(post.getPostUid())
+                    .userUid(post.getUserUid())
+                    .imageUrl(post.getImageUrl())
+                    .prompt(post.getPrompt())
+                    .caption(post.getCaption())
+                    .likeCount(post.getLikeCount())
+                    .commentCount(post.getCommentCount())
+                    .isLikedByMe(isLikedByMe(postUid))
+                    .isPublic(post.getIsPublic())
+                    .createdAt(post.getCreatedAt())
+                    .build();
+
+        } catch (InterruptedException | ExecutionException e) {
+            throw new ApiException("Gönderi bilgileri getirilirken hata oluştu: " + e);
+        }
     }
 }
