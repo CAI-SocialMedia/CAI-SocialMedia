@@ -14,6 +14,7 @@ import Footer from "./components/common/Footer";
 import { CursorGlow } from "./components/effects/CursorGlow";
 import PostDetailPage from "./pages/PostDetailPage";
 import GenerateImagePage from "./pages/GenerateImagePage.jsx";
+import ArchivedPosts from "./pages/ArchivedPosts.jsx";
 import { Toaster } from "sonner";
 
 const ProtectedRoute = ({ children }) => {
@@ -113,6 +114,11 @@ function AppContent() {
                 <Route path="/generate-image" element={
                     <ProtectedRoute>
                         <GenerateImagePage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/archived" element={
+                    <ProtectedRoute>
+                        <ArchivedPosts />
                     </ProtectedRoute>
                 } />
                 <Route path="/post-detail/:postUid" element={
