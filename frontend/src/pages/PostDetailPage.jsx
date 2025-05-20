@@ -26,27 +26,30 @@ export default function PostDetailPage() {
 
             if (!postData) {
                 toast.error("Gönderi bulunamadı veya silinmiş olabilir.");
-                setIsLoading(false);
                 return;
             }
 
             setPost(postData);
             await fetchPostOwner(postData.userUid);
         } catch (err) {
-            console.error("Post yükleme hatası:", err.response?.data || err.message || err);
+            const status = err.response?.status;
+            const message = err.response?.data?.Message || err.message || "Bilinmeyen hata";
 
-            // Daha detaylı hata mesajı gösterelim
-            if (err.response?.status === 401) {
+            if (status === 401) {
                 toast.error("Oturum süresi dolmuş olabilir. Lütfen tekrar giriş yapın.");
-            } else if (err.response?.status === 404) {
+            } else if (status === 403) {
+                toast.error("Bu gönderiye erişim izniniz yok.");
+                navigate("/");
+            } else if (status === 404) {
                 toast.error("Gönderi bulunamadı veya silinmiş olabilir.");
             } else {
-                toast.error(`Gönderi yüklenemedi: ${err.response?.data?.Message || err.message || "Bilinmeyen hata"}`);
+                toast.error(`Gönderi yüklenemedi: ${message}`);
             }
         } finally {
             setIsLoading(false);
         }
     };
+
 
 
     const fetchPostOwner = async (userUid) => {
