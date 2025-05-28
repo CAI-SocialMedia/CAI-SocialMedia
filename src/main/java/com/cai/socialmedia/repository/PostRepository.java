@@ -32,6 +32,26 @@ public class PostRepository {
         this.followRepository = followRepository;
     }
 
+    //KRİTİK - SAKIN KULLANICIYA YAYMA
+    //Tüm Kullanıcıların Postlarını Getirir
+    public List<PostDocument> getAllNonDeletedPosts() throws ExecutionException, InterruptedException {
+        List<PostDocument> postList = new ArrayList<>();
+        ApiFuture<QuerySnapshot> future = db.collection(COLLECTION_NAME)
+                .whereEqualTo("isDeleted", false)
+                .whereEqualTo("isArchived", false)
+                .get();
+
+        List<QueryDocumentSnapshot> documents = future.get().getDocuments();
+
+        for (QueryDocumentSnapshot doc : documents) {
+            PostDocument post = doc.toObject(PostDocument.class);
+            if (post != null) {
+                postList.add(post);
+            }
+        }
+        return postList;
+    }
+
     public void save(PostDocument postDocument) {
         db.collection(COLLECTION_NAME)
                 .document(postDocument.getPostUid())

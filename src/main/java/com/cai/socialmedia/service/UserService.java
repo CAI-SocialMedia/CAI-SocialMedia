@@ -7,6 +7,7 @@ import com.cai.socialmedia.enums.Role;
 import com.cai.socialmedia.enums.SubscriptionType;
 import com.cai.socialmedia.exception.ApiException;
 import com.cai.socialmedia.model.UserDocument;
+import com.cai.socialmedia.repository.FollowRepository;
 import com.cai.socialmedia.repository.UserRepository;
 import com.cai.socialmedia.util.DateUtil;
 import com.google.cloud.Timestamp;
@@ -18,6 +19,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -25,6 +29,7 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final FollowRepository followRepository;
     private final String TODAY = DateUtil.formatYearMonthDay();
 
     // Kullanıcılara günlik kredi verme islemleri
@@ -65,7 +70,7 @@ public class UserService {
     // Kullanıcı Oluşturma ve Güncelleme İşlemleri
     public UserDocument createUser(FirebaseToken token, String username) {
         validateNewUser(username);
-        
+
         UserDocument user = new UserDocument();
         user.setUid(token.getUid());
         user.setEmail(token.getEmail());
@@ -105,15 +110,15 @@ public class UserService {
         user.setUpdatedAt(DateUtil.formatTimestamp(Timestamp.now()));
         userRepository.save(user);
         return user;
-            }
+    }
 
     // Abonelik İşlemleri
     public void updateSubscription(String uid, SubscriptionType newPlan) {
         UserDocument user = getUserByUid(uid);
-        
+
         if (user.getSubscriptionType() == newPlan) {
             throw new ApiException("Zaten bu abonelik planını kullanıyorsunuz.");
-            }
+        }
 
         if (newPlan != SubscriptionType.FREE) {
             user.setSubscriptionStartDate(DateUtil.formatYearMonthDay());
@@ -191,17 +196,42 @@ public class UserService {
 
     private UserDTO convertToDTO(UserDocument user) {
         return new UserDTO(
-            user.getUid(),
-            user.getUsername(),
-            user.getDisplayName(),
-            user.getProfilePhotoUid(),
-            user.getCredits(),
-            user.getSubscriptionType().name()
+                user.getUid(),
+                user.getUsername(),
+                user.getDisplayName(),
+                user.getProfilePhotoUid(),
+                user.getCredits(),
+                user.getSubscriptionType().name()
         );
     }
 
     public PublicUserDTO getPublicUserByUid(String userUid) {
         return userRepository.getPublicUserByUid(userUid)
                 .orElseThrow(() -> new ApiException("Kullanıcı bulunamadı"));
+    }
+
+
+    public List<PublicUserDTO> searchUsers(String query, String currentUserUid) throws ExecutionException, InterruptedException {
+        String lowerQuery = query.toLowerCase();
+        List<UserDocument> allUsers = userRepository.getAllActiveUsers();
+
+        return allUsers.stream()
+                .filter(user -> !Boolean.TRUE.equals(user.getIsDeleted()))
+                .filter(user ->
+                        (user.getDisplayName() != null && user.getDisplayName().toLowerCase().contains(lowerQuery)) ||
+                                (user.getUsername() != null && user.getUsername().toLowerCase().contains(lowerQuery))
+                )
+                .map(user -> {
+                    boolean isFollowing = followRepository.isUserFollowedBy(currentUserUid, user.getUid());
+
+                    return PublicUserDTO.builder()
+                            .userUid(user.getUid())
+                            .displayName(user.getDisplayName())
+                            .username(user.getUsername())
+                            .profilePhotoUid(user.getProfilePhotoUid())
+                            .isFollowing(isFollowing)
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 }

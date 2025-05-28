@@ -20,12 +20,12 @@ import { useAuth } from "../contexts/AuthContext.jsx";
  * @param {function} [props.onRefresh]
  */
 export default function FullPostCard({
-     post,
-     postOwner,
-     currentUser,
-     comments = [],
-     showComments = true,
-     onRefresh
+                                         post,
+                                         postOwner,
+                                         currentUser,
+                                         comments = [],
+                                         showComments = true,
+                                         onRefresh
                                      }) {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -220,15 +220,16 @@ export default function FullPostCard({
                 {/* Gönderi Sahibinin Avatarı ve Adı */}
                 <div
                     className="flex items-center gap-4 cursor-pointer"
-                    onClick={() => navigate(`/profile/${postOwner.userUid}`)}
+                    onClick={() => navigate(`/profile/${postOwner?.userUid ?? post.userUid}`)}
                     role="link"
                     aria-label={`${postOwner.displayName} adlı kullanıcının profiline git`}
                 >
-                    <Avatar user={postOwner} size="md"/>
+                    <Avatar user={postOwner ?? post} size="md" />
                     <div>
                         <h2 className="font-bold text-lg text-slate-900 dark:text-white">
-                            {postOwner.displayName}
+                            {postOwner?.displayName ?? post.displayName}
                         </h2>
+
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                             {new Date(post.createdAt).toLocaleString("tr-TR", {
                                 year: "numeric",
@@ -353,7 +354,7 @@ export default function FullPostCard({
                         </button>
 
                         {/* Sadece kendi gönderisi için arşivleme butonu gösterilsin */}
-                        {user?.uid === postOwner?.userUid && (
+                        {postOwner && user?.uid === postOwner.userUid && (
                             <button
                                 onClick={handleToggleArchive}
                                 className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors"

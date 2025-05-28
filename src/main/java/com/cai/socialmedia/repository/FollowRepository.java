@@ -63,5 +63,21 @@ public class FollowRepository {
         }
         return ids;
     }
+
+    public boolean isUserFollowedBy(String currentUserUid, String targetUserUid) {
+        try {
+            DocumentSnapshot snapshot = db.collection("users")
+                    .document(currentUserUid)
+                    .collection("following")
+                    .document(targetUserUid)
+                    .get()
+                    .get();
+
+            return snapshot.exists();
+        } catch (Exception e) {
+            throw new RuntimeException("Takip kontrolü sırasında hata oluştu: " + e.getMessage(), e);
+        }
+    }
+
 }
 

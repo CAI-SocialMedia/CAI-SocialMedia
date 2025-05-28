@@ -20,7 +20,11 @@ export const Header = ({ user }) => {
 
     const handleSearch = (e) => {
         e.preventDefault();
+        if (searchQuery.trim().length === 0) return;
+        navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+        setSearchQuery("");
     };
+
 
     return (
         <header className="sticky top-0 z-50 backdrop-blur-sm border-b transition-colors duration-300 bg-white/90 border-slate-200 dark:bg-slate-900/95 dark:border-slate-800">

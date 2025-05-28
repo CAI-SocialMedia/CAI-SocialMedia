@@ -15,6 +15,8 @@ import { CursorGlow } from "./components/effects/CursorGlow";
 import PostDetailPage from "./pages/PostDetailPage";
 import GenerateImagePage from "./pages/GenerateImagePage.jsx";
 import ArchivedPosts from "./pages/ArchivedPosts.jsx";
+import SearchPage from "./pages/SearchPage.jsx";
+
 import { Toaster } from "sonner";
 
 const ProtectedRoute = ({ children }) => {
@@ -124,6 +126,11 @@ function AppContent() {
                 <Route path="/post-detail/:postUid" element={
                     <ProtectedRoute>
                         <PostDetailPage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/search" element={
+                    <ProtectedRoute>
+                        <SearchPage />
                     </ProtectedRoute>
                 } />
                 <Route path="*" element={<Navigate to="/login" replace />} />

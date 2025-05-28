@@ -40,7 +40,8 @@ public class UserRepository {
             }
             return users;
         } catch (Exception e) {
-            throw new ApiException("Aktif kullanıcılar getirilirken hata oluştu: " + e.getMessage());
+            log.error("Aktif kullanicilar getirilirken hata: {}", e.getMessage());
+            throw new ApiException("Aktif kullanicilar getirilirken hata olustu: " + e.getMessage());
         }
     }
 

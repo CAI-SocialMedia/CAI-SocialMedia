@@ -10,8 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PublicUserDTO {
+    private String userUid;
     private String displayName;
     private String username;
     private String profilePhotoUid;
+    private boolean isFollowing;
 }
 

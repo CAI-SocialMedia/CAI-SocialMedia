@@ -23,4 +23,7 @@ public class PostResponseDTO {
     private String createdAt;
     private Boolean isArchived;
     private String updatedAt;
+    private String displayName;
+    private String username;
+    private String profilePhotoUid;
 }

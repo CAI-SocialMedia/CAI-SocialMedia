@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -90,11 +91,26 @@ public class UserController {
         }
         throw new ApiException("Geçersiz veya eksik Authorization header");
     }
-// gidiyorum aslkımbb ta
+
     @GetMapping("/public/{userUid}")
     public ResponseEntity<ApiResponse<PublicUserDTO>> getPublicUserByUid(@PathVariable String userUid) {
         SecurityUtil.getAuthenticatedUidOrThrow();
         PublicUserDTO fullUser = userService.getPublicUserByUid(userUid);
         return ResponseEntity.ok(ApiResponse.success(fullUser));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<List<PublicUserDTO>>> searchUsers(@RequestParam String q) {
+        if (q == null || q.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ApiResponse.fail("Arama sorgusu bos olamaz"));
+        }
+        try {
+            String userUid = SecurityUtil.getAuthenticatedUidOrThrow();
+            List<PublicUserDTO> results = userService.searchUsers(q.trim(), userUid);
+            return ResponseEntity.ok(ApiResponse.success("Arama basarili", results));
+        } catch (Exception e) {
+            log.error("Kullanici arama hatasi: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(ApiResponse.fail("Beklenmeyen hata olustu"));
+        }
     }
 }

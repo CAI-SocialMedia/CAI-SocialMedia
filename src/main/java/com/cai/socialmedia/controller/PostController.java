@@ -70,4 +70,11 @@ public class PostController {
         List<PostResponseDTO> posts = postService.getArchivedPosts(userUid);
         return ResponseEntity.ok(ApiResponse.success(posts));
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<List<PostResponseDTO>>> searchPosts(@RequestParam String q) {
+        String userUid = SecurityUtil.getAuthenticatedUidOrThrow();
+        List<PostResponseDTO> results = postService.searchPosts(q, userUid);
+        return ResponseEntity.ok(ApiResponse.success("Arama sonuçları", results));
+    }
 }
