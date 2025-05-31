@@ -122,4 +122,13 @@ public class PostService {
             throw new ApiException("Favoriler alınırken hata oluştu: " + e.getMessage());
         }
     }
+
+    public List<PostDocument> getFavorites(String userUid) {
+        try {
+            return favoriteRepository.getFavoritesByUser(userUid);
+        } catch (Exception e) {
+            throw new ApiException("Favoriler alınırken hata oluştu: " + e.getMessage());
+        }
+    }
+
 }
