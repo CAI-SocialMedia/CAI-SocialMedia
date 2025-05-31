@@ -2,6 +2,7 @@ package com.cai.socialmedia.controller;
 
 import com.cai.socialmedia.dto.CaptionUpdateRequestDTO;
 import com.cai.socialmedia.dto.PostResponseDTO;
+import com.cai.socialmedia.model.PostDocument;
 import com.cai.socialmedia.service.PostService;
 import com.cai.socialmedia.util.ApiResponse;
 import com.cai.socialmedia.util.SecurityUtil;
@@ -71,10 +72,17 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.success(posts));
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<ApiResponse<List<PostResponseDTO>>> searchPosts(@RequestParam String q) {
+    @PostMapping("/favorite/toggle/{postUid}")
+    public ResponseEntity<ApiResponse<Void>> toggleFavorite(@PathVariable String postUid) {
         String userUid = SecurityUtil.getAuthenticatedUidOrThrow();
-        List<PostResponseDTO> results = postService.searchPosts(q, userUid);
-        return ResponseEntity.ok(ApiResponse.success("Arama sonuçları", results));
+        postService.toggleFavorite(userUid, postUid);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @GetMapping("/favorites")
+    public ResponseEntity<ApiResponse<List<PostDocument>>> getFavorites() {
+        String userUid = SecurityUtil.getAuthenticatedUidOrThrow();
+        List<PostDocument> favorites = postService.getFavorites(userUid);
+        return ResponseEntity.ok(ApiResponse.success(favorites));
     }
 }
