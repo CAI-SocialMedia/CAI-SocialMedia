@@ -27,7 +27,7 @@ export const UserDropdown = ({ onClose }) => {
     };
 
     const handleFavoritesPosts = () => {
-        toast.info('Favoriler getirilmiyorrrr');
+        navigate('/favorites');
         onClose();
     };
 

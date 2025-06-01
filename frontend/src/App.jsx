@@ -16,6 +16,7 @@ import PostDetailPage from "./pages/PostDetailPage";
 import GenerateImagePage from "./pages/GenerateImagePage.jsx";
 import ArchivedPosts from "./pages/ArchivedPosts.jsx";
 import SearchPage from "./pages/SearchPage.jsx";
+import FavoritesPage from "./pages/FavoritesPage";
 
 import { Toaster } from "sonner";
 
@@ -131,6 +132,11 @@ function AppContent() {
                 <Route path="/search" element={
                     <ProtectedRoute>
                         <SearchPage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/favorites" element={
+                    <ProtectedRoute>
+                        <FavoritesPage />
                     </ProtectedRoute>
                 } />
                 <Route path="*" element={<Navigate to="/login" replace />} />

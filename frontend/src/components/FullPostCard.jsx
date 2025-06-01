@@ -38,6 +38,8 @@ export default function FullPostCard({
     const [editedText, setEditedText] = useState("");
     const [deletingCommentId, setDeletingCommentId] = useState(null);
     const [showAllComments, setShowAllComments] = useState(false);
+    const [favorites, setFavorites] = useState([]);
+    const [recentImages, setRecentImages] = useState([]);
 
     const [localLiked, setLocalLiked] = useState(post.isLikedByMe);
     const [localLikeCount, setLocalLikeCount] = useState(post.likeCount);
@@ -159,11 +161,13 @@ export default function FullPostCard({
             return;
         }
         try {
-            await api.post(`/favorite/toggle/${post.postUid}`);
+            await api.post(`/post/favorite/toggle/${post.postUid}`);
             toast.success("Favori durumu güncellendi!");
             onRefresh?.();
         } catch (err) {
-            toast.error("Favori durumu güncellenemedi.");
+            const errorMsg =
+                err.response?.data?.Message || "Favori durumu güncellenemedi.";
+            toast.error(errorMsg);
             console.error("Toggle favorite failed:", err);
         }
     };
