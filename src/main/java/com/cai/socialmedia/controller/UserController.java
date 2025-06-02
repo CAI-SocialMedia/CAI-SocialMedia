@@ -3,6 +3,7 @@ package com.cai.socialmedia.controller;
 import com.cai.socialmedia.dto.PublicUserDTO;
 import com.cai.socialmedia.dto.UpdateUserRequestDTO;
 import com.cai.socialmedia.dto.UserDTO;
+import com.cai.socialmedia.enums.SubscriptionType;
 import com.cai.socialmedia.model.UserDocument;
 import com.cai.socialmedia.service.UserService;
 import com.cai.socialmedia.exception.ApiException;
@@ -74,6 +75,27 @@ public class UserController {
             user.getSubscriptionType().name()
         ));
     }
+
+    // Abonelik planını güncelle
+    @PostMapping("/subscription/update")
+    public ResponseEntity<ApiResponse<Void>> updateSubscription(@RequestBody Map<String, String> body) {
+        String uid = SecurityUtil.getAuthenticatedUidOrThrow();
+        String newPlan = body.get("subscriptionType");
+        if (newPlan == null || newPlan.isEmpty()) {
+            throw new ApiException("Abonelik planı gönderilmedi");
+        }
+        userService.updateSubscription(uid, SubscriptionType.fromString(newPlan));
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    // Kullanıcının mevcut abonelik planını getir
+    @GetMapping("/subscription")
+    public ResponseEntity<ApiResponse<SubscriptionType>> getCurrentSubscription() {
+        String uid = SecurityUtil.getAuthenticatedUidOrThrow();
+        UserDocument user = userService.getUserByUid(uid);
+        return ResponseEntity.ok(ApiResponse.success(user.getSubscriptionType()));
+    }
+
 
     // Kullanıcı Adı Kontrolü
     @PostMapping("/check-username")

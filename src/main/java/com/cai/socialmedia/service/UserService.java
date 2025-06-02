@@ -83,6 +83,7 @@ public class UserService {
         user.setDailyQuota(SubscriptionType.FREE.getDailyQuota());
         user.setCredits(SubscriptionType.FREE.getDailyQuota());
         user.setLastQuotaResetDate(TODAY);
+        user.setLastSubscriptionUpdateDate(TODAY);
         user.setCreatedAt(DateUtil.formatTimestamp(Timestamp.now()));
         user.setUpdatedAt(DateUtil.formatTimestamp(Timestamp.now()));
 
@@ -116,12 +117,20 @@ public class UserService {
     public void updateSubscription(String uid, SubscriptionType newPlan) {
         UserDocument user = getUserByUid(uid);
 
+        // 📌 Günde bir kez kontrolü
+        String today = DateUtil.formatYearMonthDay(); // yyyy-MM-dd
+        if (today.equals(user.getLastSubscriptionUpdateDate())) {
+            throw new ApiException("Abonelik planı sadece günde bir kez değiştirilebilir.");
+        }
+
+        // 📌 Zaten bu planı kullanıyorsa
         if (user.getSubscriptionType() == newPlan) {
             throw new ApiException("Zaten bu abonelik planını kullanıyorsunuz.");
         }
 
+        // 📌 Plan bilgilerini güncelle
         if (newPlan != SubscriptionType.FREE) {
-            user.setSubscriptionStartDate(DateUtil.formatYearMonthDay());
+            user.setSubscriptionStartDate(today);
             user.setSubscriptionEndDate(DateUtil.formatYearMonthDayPlusDays(30));
             user.setIsPremium(true);
         } else {
@@ -133,6 +142,10 @@ public class UserService {
         user.setSubscriptionType(newPlan);
         user.setDailyQuota(newPlan.getDailyQuota());
         user.setCredits(newPlan.getDailyQuota());
+
+        // 📌 Son plan değiştirme tarihini güncelle
+        user.setLastSubscriptionUpdateDate(today);
+
         user.setUpdatedAt(DateUtil.formatTimestamp(Timestamp.now()));
         userRepository.save(user);
     }
