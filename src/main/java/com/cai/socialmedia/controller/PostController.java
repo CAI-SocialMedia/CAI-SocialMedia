@@ -85,4 +85,14 @@ public class PostController {
         List<PostDocument> favorites = postService.getFavorites(userUid);
         return ResponseEntity.ok(ApiResponse.success(favorites));
     }
+
+    @GetMapping("/explore")
+    public ApiResponse<List<PostResponseDTO>> getTopExplorePosts() {
+        return ApiResponse.success(postService.getTopExplorePosts());
+    }
+
+    @GetMapping("/week-top")
+    public ApiResponse<List<PostResponseDTO>> getTopPostsOfTheWeek() {
+        return ApiResponse.success(postService.getTopPostsOfTheWeek());
+    }
 }
