@@ -17,6 +17,7 @@ import GenerateImagePage from "./pages/GenerateImagePage.jsx";
 import ArchivedPosts from "./pages/ArchivedPosts.jsx";
 import SearchPage from "./pages/SearchPage.jsx";
 import FavoritesPage from "./pages/FavoritesPage";
+import SubscriptionPage  from "./pages/SubscriptionPage.jsx";
 
 import { Toaster } from "sonner";
 
@@ -137,6 +138,11 @@ function AppContent() {
                 <Route path="/favorites" element={
                     <ProtectedRoute>
                         <FavoritesPage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/update-subscription" element={
+                    <ProtectedRoute>
+                        <SubscriptionPage />
                     </ProtectedRoute>
                 } />
                 <Route path="*" element={<Navigate to="/login" replace />} />
