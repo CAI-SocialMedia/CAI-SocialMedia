@@ -4,7 +4,6 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import UserInfo from "./pages/UserInfo.jsx";
 import { Header } from "./components/Header";
-import { Explore } from './pages/Explore';
 import { Home } from "./pages/Home";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -18,6 +17,7 @@ import ArchivedPosts from "./pages/ArchivedPosts.jsx";
 import SearchPage from "./pages/SearchPage.jsx";
 import FavoritesPage from "./pages/FavoritesPage";
 import SubscriptionPage  from "./pages/SubscriptionPage.jsx";
+import Explore from './pages/Explore';
 
 import { Toaster } from "sonner";
 
